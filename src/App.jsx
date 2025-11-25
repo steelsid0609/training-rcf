@@ -1,89 +1,130 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
-// layouts
+// Layouts
+import HomeLayout from "./layouts/HomeLayout";
+import AuthLayout from "./layouts/AuthLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import SupervisorLayout from "./layouts/SupervisorLayout";
 import AdminLayout from "./layouts/AdminLayout";
-import AuthLayout from "./layouts/AuthLayout";
-import HomeLayout from "./layouts/HomeLayout";
 
-// pages (adjust paths/names to match your repo)
+// Public pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
+// Student pages
 import StudentDashboard from "./pages/StudentDashboard";
-import StudentApplications from "./pages/StudentApplications";
+import StudentBasicDetailsPage from "./pages/student/StudentBasicDetailsPage";
+import StudentChangePasswordPage from "./pages/student/StudentChangePasswordPage";
+import StudentCoverLetterPage from "./pages/student/StudentCoverLetterPage";
+import StudentApplicationsPage from "./pages/student/StudentApplicationsPage";
 
-import SupervisorDashboard from "./pages/SupervisorDashboard";
+// Supervisor pages
+import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage";
+import SupervisorPendingApplicationsPage from "./pages/supervisor/SupervisorPendingApplicationsPage";
+import SupervisorAllApplicationsPage from "./pages/supervisor/SupervisorAllApplicationsPage";
+import SupervisorCompletedApplicationsPage from "./pages/supervisor/SupervisorCompletedApplicationsPage";
+import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRejectedApplicationsPage";
+import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage";
+import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage";
+import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage";
 
-import AdminDashboard from "./pages/AdminDashboard";
-
-import Unauthorized from "./pages/Unauthorized";
-import NotFound from "./pages/NotFound";
+// Admin pages
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+// later you can add more admin pages and routes
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
+    <AuthProvider>
+      <BrowserRouter>
         <Routes>
-          {/* public routes */}
+          {/* PUBLIC / HOME */}
           <Route element={<HomeLayout />}>
             <Route path="/" element={<Home />} />
           </Route>
 
+          {/* AUTH PAGES */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Route>
 
-          <Route path="/unauthorized" element={<Unauthorized />} />
-
-          {/* STUDENT routes */}
+          {/* STUDENT DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
             <Route element={<StudentLayout />}>
+              <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route
-                path="/student/dashboard"
-                element={<StudentDashboard />}
+                path="/student/basic-details"
+                element={<StudentBasicDetailsPage />}
+              />
+              <Route
+                path="/student/change-password"
+                element={<StudentChangePasswordPage />}
+              />
+              <Route
+                path="/student/cover-letter"
+                element={<StudentCoverLetterPage />}
               />
               <Route
                 path="/student/applications"
-                element={<StudentApplications />}
+                element={<StudentApplicationsPage />}
               />
             </Route>
           </Route>
 
-          {/* SUPERVISOR routes */}
+          {/* SUPERVISOR DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["supervisor"]} />}>
             <Route element={<SupervisorLayout />}>
               <Route
                 path="/supervisor/dashboard"
-                element={<SupervisorDashboard />}
+                element={<SupervisorDashboardPage />}
               />
-              {/* add more here */}
+              <Route
+                path="/supervisor/applications/pending"
+                element={<SupervisorPendingApplicationsPage />}
+              />
+              <Route
+                path="/supervisor/applications/all"
+                element={<SupervisorAllApplicationsPage />}
+              />
+              <Route
+                path="/supervisor/applications/completed"
+                element={<SupervisorCompletedApplicationsPage />}
+              />
+              <Route
+                path="/supervisor/applications/rejected"
+                element={<SupervisorRejectedApplicationsPage />}
+              />
+              <Route
+                path="/supervisor/users"
+                element={<SupervisorUsersPage />}
+              />
+              <Route
+                path="/supervisor/colleges/temp"
+                element={<SupervisorCollegesTempPage />}
+              />
+              <Route
+                path="/supervisor/colleges/master"
+                element={<SupervisorCollegesMasterPage />}
+              />
             </Route>
           </Route>
 
-          {/* ADMIN routes */}
+          {/* ADMIN DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route element={<AdminLayout />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              {/* add more here */}
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              {/* later add more admin routes here, reusing supervisor pages + extra */}
             </Route>
           </Route>
-
-          {/* default redirect or 404 */}
-          <Route path="/student" element={<Navigate to="/student/dashboard" />} />
-          <Route path="/supervisor" element={<Navigate to="/supervisor/dashboard" />} />
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
-
-          <Route path="*" element={<NotFound />} />
         </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

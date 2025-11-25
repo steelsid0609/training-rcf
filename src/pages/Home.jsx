@@ -10,10 +10,6 @@ export default function Home() {
         Student Login
       </button>
 
-      <button onClick={() => nav("/login?role=institute")} style={buttonStyle}>
-        Institute Login
-      </button>
-
       <button
         onClick={() => nav("/login?role=admin")}
         style={{ ...buttonStyle, background: "#cc0000" }}

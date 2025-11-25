@@ -10,19 +10,21 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { toast } from "react-toastify";
+import bg from "../assets/left-bg.jpg";
 import logo from "../assets/transparent-logo.png";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // detect login role (student/admin/institute)
+  // detect login role (student/admin) — anything else treated as student
   const params = new URLSearchParams(location.search);
-  const intentRole = (
-    (location.state && location.state.role) ||
-    params.get("role") ||
-    "student"
-  ).toLowerCase();
+  const rawRole =
+    ((location.state && location.state.role) ||
+      params.get("role") ||
+      "student") + "";
+  const intentRole =
+    rawRole.toLowerCase() === "admin" ? "admin" : "student";
 
   // clean up ?role=... from URL
   if (location.search) {
@@ -111,7 +113,7 @@ export default function Login() {
 
       if (!role) role = "student";
 
-      // if user came to admin/supervisor login page but has wrong role -> reject
+      // if user came to admin login page but has wrong role -> reject
       if (intentRole === "admin" && !["admin", "supervisor"].includes(role)) {
         await auth.signOut();
         toast.error("This account is not an admin or supervisor account.");
@@ -175,8 +177,8 @@ export default function Login() {
       );
       const user = res.user;
 
-      const resolvedRole =
-        intentRole === "institute" ? "institute" : "student";
+      // 🔥 no institute role anymore: always student
+      const resolvedRole = "student";
 
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
@@ -239,7 +241,7 @@ export default function Login() {
           <img
             src={logo}
             alt="Logo"
-            style={{ width: "100px", cursor: "pointer" }}
+            style={{ width: "80px", cursor: "pointer" }}
             onClick={() => navigate("/")}
           />
           <h1 style={leftHeading}>
@@ -284,8 +286,6 @@ export default function Login() {
               <h2 style={{ marginBottom: 20 }}>
                 {intentRole === "admin"
                   ? "Admin / Supervisor Login"
-                  : intentRole === "institute"
-                  ? "Institute Login"
                   : "Student Login"}
               </h2>
 
@@ -343,10 +343,7 @@ export default function Login() {
             </div>
           ) : (
             <div style={card}>
-              <h2>
-                Register (
-                {intentRole === "institute" ? "Institute" : "Student"})
-              </h2>
+              <h2>Register (Student)</h2>
               <form onSubmit={handleRegister}>
                 <input
                   type="email"
@@ -403,14 +400,18 @@ const leftPane = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
+  backgroundImage: `url(${bg})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
 };
 const leftHeading = {
   marginTop: "20px",
   fontSize: "40px",
   fontWeight: "700",
   color: "#006400",
+  lineHeight: "1",
   textAlign: "center",
-  lineHeight: "1.4",
 };
 const rightPane = {
   flex: "0 0 75%",
@@ -431,7 +432,7 @@ const card = {
   padding: 28,
   borderRadius: 12,
   background: "#fff",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+  boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
   textAlign: "center",
 };
 const input = {

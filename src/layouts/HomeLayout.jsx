@@ -7,11 +7,11 @@ export default function HomeLayout() {
   return (
     <div
       style={{
-        minHeight: "98vh",
         display: "flex",
+        height: "100vh",
         alignItems: "center",
         justifyContent: "center",
-        //backgroundImage: `url(${bg})`,
+        backgroundImage: `url(${bg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
