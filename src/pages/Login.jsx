@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import logo from "../assets/transparent-logo.png";
 
 export default function Login() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation();
 
   // detect login role (student/admin/institute)
@@ -29,6 +29,7 @@ export default function Login() {
     window.history.replaceState({}, "", location.pathname);
   }
 
+  // ------------------ Login state ------------------
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,9 @@ export default function Login() {
       const user = res.user;
 
       if (!user.emailVerified) {
-        const resend = window.confirm("Email not verified. Resend verification email?");
+        const resend = window.confirm(
+          "Email not verified. Resend verification email?"
+        );
         if (resend) {
           await sendEmailVerification(user, {
             url: `${window.location.origin}/finishVerify`,
@@ -88,11 +91,11 @@ export default function Login() {
 
       await ensureUserDoc(user);
 
-      // prefer role claim from ID token (for paid plan)
+      // prefer role claim from ID token
       const idTokenResult = await user.getIdTokenResult(true);
       let role = (idTokenResult.claims.role || "").toLowerCase();
 
-      // fallback to users/{uid} (for free plan)
+      // fallback to users/{uid}
       if (!role) {
         try {
           const userRef = doc(db, "users", user.uid);
@@ -108,7 +111,6 @@ export default function Login() {
 
       if (!role) role = "student";
 
-      // --- CHANGE 1: Rejection Logic ---
       // if user came to admin/supervisor login page but has wrong role -> reject
       if (intentRole === "admin" && !["admin", "supervisor"].includes(role)) {
         await auth.signOut();
@@ -126,12 +128,16 @@ export default function Login() {
         console.warn("Failed writing token to localStorage", e);
       }
 
-      // --- CHANGE 2: Redirect Logic ---
-      if (role === "admin") nav("/admin");
-      else if (role === "supervisor") nav("/supervisor"); // Added supervisor redirect
-      else if (role === "institute") nav("/institute/profile");
-      else nav("/student/profile");
-
+      // --- Redirect Logic (matches App.jsx routes) ---
+      if (role === "student") {
+        navigate("/student/dashboard");
+      } else if (role === "supervisor") {
+        navigate("/supervisor/dashboard");
+      } else if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       console.error("Login error:", err);
       toast.error(err.message || "Sign-in failed");
@@ -140,7 +146,7 @@ export default function Login() {
     }
   }
 
-  // Registration logic unchanged but uses toast
+  // ------------------ Registration ------------------
   const [showRegister, setShowRegister] = useState(false);
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
@@ -162,10 +168,15 @@ export default function Login() {
     }
 
     try {
-      const res = await createUserWithEmailAndPassword(auth, regEmail, regPassword);
+      const res = await createUserWithEmailAndPassword(
+        auth,
+        regEmail,
+        regPassword
+      );
       const user = res.user;
 
-      const resolvedRole = intentRole === "institute" ? "institute" : "student";
+      const resolvedRole =
+        intentRole === "institute" ? "institute" : "student";
 
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
@@ -196,7 +207,7 @@ export default function Login() {
     }
   }
 
-  // Forgot password
+  // ------------------ Forgot password ------------------
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
@@ -220,7 +231,7 @@ export default function Login() {
     }
   }
 
-  /* ------------------ UI (kept nearly identical) ------------------ */
+  /* ------------------ UI ------------------ */
   return (
     <div style={wrap}>
       <div style={leftPane}>
@@ -229,9 +240,11 @@ export default function Login() {
             src={logo}
             alt="Logo"
             style={{ width: "100px", cursor: "pointer" }}
-            onClick={() => nav("/")}
+            onClick={() => navigate("/")}
           />
-          <h1 style={leftHeading}>Rashtriya Chemical and Fertilizer Limited</h1>
+          <h1 style={leftHeading}>
+            Rashtriya Chemical and Fertilizer Limited
+          </h1>
         </div>
       </div>
 
@@ -241,39 +254,131 @@ export default function Login() {
             <div style={card}>
               <h2>Reset Password</h2>
               <form onSubmit={handleForgot}>
-                <input type="email" placeholder="Email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required style={input} />
-                <button type="submit" disabled={forgotLoading} style={primaryBtn}>{forgotLoading ? "Sending..." : "Send reset email"}</button>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                  style={input}
+                />
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  style={primaryBtn}
+                >
+                  {forgotLoading ? "Sending..." : "Send reset email"}
+                </button>
               </form>
               <div style={{ marginTop: 20 }}>
-                <button onClick={() => setShowForgot(false)} style={linkBtn}>← Back to sign in</button>
+                <button
+                  onClick={() => setShowForgot(false)}
+                  style={linkBtn}
+                >
+                  ← Back to sign in
+                </button>
               </div>
             </div>
           ) : !showRegister ? (
             <div style={card}>
-              {/* --- CHANGE 3: UI Title --- */}
-              <h2 style={{ marginBottom: 20 }}>{intentRole === "admin" ? "Admin / Supervisor Login" : intentRole === "institute" ? "Institute Login" : "Student Login"}</h2>
+              <h2 style={{ marginBottom: 20 }}>
+                {intentRole === "admin"
+                  ? "Admin / Supervisor Login"
+                  : intentRole === "institute"
+                  ? "Institute Login"
+                  : "Student Login"}
+              </h2>
 
               <form onSubmit={handleLogin}>
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={input} />
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={input} />
-                <button type="submit" disabled={loading} style={primaryBtn}>{loading ? "Signing in…" : "Sign in"}</button>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={input}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={input}
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={primaryBtn}
+                >
+                  {loading ? "Signing in…" : "Sign in"}
+                </button>
               </form>
 
-              <div style={{ marginTop: 35, display: "flex", justifyContent: "space-between", width: "100%" }}>
-                <button onClick={() => setShowForgot(true)} style={linkBtn}>Forgot password?</button>
-                {intentRole !== "admin" ? <button onClick={() => setShowRegister(true)} style={linkBtn}>Register</button> : <div />}
+              <div
+                style={{
+                  marginTop: 35,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                <button
+                  onClick={() => setShowForgot(true)}
+                  style={linkBtn}
+                >
+                  Forgot password?
+                </button>
+                {intentRole !== "admin" ? (
+                  <button
+                    onClick={() => setShowRegister(true)}
+                    style={linkBtn}
+                  >
+                    Register
+                  </button>
+                ) : (
+                  <div />
+                )}
               </div>
             </div>
           ) : (
             <div style={card}>
-              <h2>Register ({intentRole === "institute" ? "Institute" : "Student"})</h2>
+              <h2>
+                Register (
+                {intentRole === "institute" ? "Institute" : "Student"})
+              </h2>
               <form onSubmit={handleRegister}>
-                <input type="email" placeholder="Email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} required style={input} />
-                <input type="password" placeholder="Password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required style={input} />
-                <button type="submit" disabled={regLoading} style={primaryBtn}>{regLoading ? "Registering..." : "Register"}</button>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  required
+                  style={input}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  required
+                  style={input}
+                />
+                <button
+                  type="submit"
+                  disabled={regLoading}
+                  style={primaryBtn}
+                >
+                  {regLoading ? "Registering..." : "Register"}
+                </button>
               </form>
               <div style={{ marginTop: 35 }}>
-                <button onClick={() => setShowRegister(false)} style={linkBtn}>← Back to sign in</button>
+                <button
+                  onClick={() => setShowRegister(false)}
+                  style={linkBtn}
+                >
+                  ← Back to sign in
+                </button>
               </div>
             </div>
           )}
@@ -283,13 +388,76 @@ export default function Login() {
   );
 }
 
-/* ---------- Styles (kept same) ---------- */
-const wrap = { position: "fixed", inset: 0, display: "flex", width: "100vw", height: "100vh", overflow: "hidden" };
-const leftPane = { flex: "0 0 25%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center" };
-const leftHeading = { marginTop: "20px", fontSize: "40px", fontWeight: "700", color: "#006400", textAlign: "center", lineHeight: "1.4" };
-const rightPane = { flex: "0 0 75%", height: "100%", background: "#ffffff", display: "flex", flexDirection: "column" };
-const cardWrap = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px" };
-const card = { width: 550, padding: 28, borderRadius: 12, background: "#fff", boxShadow: "0 6px 20px rgba(0,0,0,0.08)", textAlign: "center" };
-const input = { width: "80%", padding: "12px 12px", marginTop: 20, borderRadius: 8, border: "1px solid #ddd", fontSize: 14 };
-const primaryBtn = { width: "100%", padding: "10px 12px", borderRadius: 8, border: "none", marginTop: 25, background: "#28a745", color: "white", fontWeight: 600, cursor: "pointer" };
-const linkBtn = { background: "transparent", border: "none", color: "#0066cc", cursor: "pointer", padding: 0, fontSize: 14 };
+/* ---------- Styles ---------- */
+const wrap = {
+  position: "fixed",
+  inset: 0,
+  display: "flex",
+  width: "100vw",
+  height: "100vh",
+  overflow: "hidden",
+};
+const leftPane = {
+  flex: "0 0 25%",
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
+const leftHeading = {
+  marginTop: "20px",
+  fontSize: "40px",
+  fontWeight: "700",
+  color: "#006400",
+  textAlign: "center",
+  lineHeight: "1.4",
+};
+const rightPane = {
+  flex: "0 0 75%",
+  height: "100%",
+  background: "#ffffff",
+  display: "flex",
+  flexDirection: "column",
+};
+const cardWrap = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "32px",
+};
+const card = {
+  width: 550,
+  padding: 28,
+  borderRadius: 12,
+  background: "#fff",
+  boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+  textAlign: "center",
+};
+const input = {
+  width: "80%",
+  padding: "12px 12px",
+  marginTop: 20,
+  borderRadius: 8,
+  border: "1px solid #ddd",
+  fontSize: 14,
+};
+const primaryBtn = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 8,
+  border: "none",
+  marginTop: 25,
+  background: "#28a745",
+  color: "white",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+const linkBtn = {
+  background: "transparent",
+  border: "none",
+  color: "#0066cc",
+  cursor: "pointer",
+  padding: 0,
+  fontSize: 14,
+};
