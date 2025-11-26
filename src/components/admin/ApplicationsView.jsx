@@ -1,3 +1,4 @@
+// src/components/admin/ApplicationsView.jsx
 import React from "react";
 
 export default function ApplicationsView({
