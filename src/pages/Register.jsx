@@ -1,8 +1,10 @@
 // src/pages/Register.jsx
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { auth } from "../firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Added imports
+import { auth, db } from "../firebase"; // Added db
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify"; // Good for consistency
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -13,18 +15,42 @@ export default function Register() {
   async function handleRegister(e) {
     e.preventDefault();
     setLoading(true);
+
+    // Basic validation
+    if (!email.includes("@")) {
+        toast.warning("Invalid email");
+        setLoading(false);
+        return;
+    }
+
     try {
+      // 1. Create Auth User
       const res = await createUserWithEmailAndPassword(auth, email, password);
-      // send verification link
-      await sendEmailVerification(res.user, {
-        url: `${window.location.origin}/finishVerify`,
+      const user = res.user;
+
+      // 2. CRITICAL: Create Firestore Document immediately
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        role: "student", // Default role
+        createdAt: serverTimestamp(),
+        // Add empty placeholders so profile page doesn't crash later
+        fullName: "",
+        phone: "",
+        collegeName: "", 
+      });
+
+      // 3. Send Verification
+      await sendEmailVerification(user, {
+        url: `${window.location.origin}/login`, // Redirect back to login after verify
         handleCodeInApp: true
       });
-      alert("Registration success — a verification email was sent. Please check your inbox.");
-      nav("/"); // or to a page telling user to verify
+
+      toast.success("Registration success! Please check your email to verify.");
+      nav("/"); 
     } catch (err) {
       console.error(err);
-      alert("Register error: " + err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }

@@ -49,7 +49,7 @@ export default function SupervisorLayout() {
   const handleLogout = async () => {
     try {
       await signOut(auth);      // 🔥 Firebase logout
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       console.error("Logout error", err);
     }

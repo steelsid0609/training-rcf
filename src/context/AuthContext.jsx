@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
@@ -23,17 +22,19 @@ export const AuthProvider = ({ children }) => {
       setUser(firebaseUser);
 
       try {
-        // adjust collection/path if you use something else
+        // Fetch the role from the 'users' collection
+        // SECURITY: This ensures client-side redirects happen based on real DB data
         const snap = await getDoc(doc(db, "users", firebaseUser.uid));
         if (snap.exists()) {
           const data = snap.data();
-          setRole(data.role || null);
+          setRole(data.role || "student");
         } else {
-          setRole(null);
+          // Fallback if doc is missing
+          setRole("student");
         }
       } catch (err) {
         console.error("Error fetching user role", err);
-        setRole(null);
+        setRole("student");
       } finally {
         setLoading(false);
       }
@@ -49,10 +50,52 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
   };
 
-  // you can replace this with a spinner if you want
-  if (loading) return null;
+  // --- UI: Loading Screen ---
+  if (loading) {
+    return (
+      <div style={loadingContainer}>
+        <div style={spinnerStyle}></div>
+        <p style={{ marginTop: "15px", fontFamily: "sans-serif", color: "#555" }}>
+          Verifying security access...
+        </p>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
+
+// Styles for the loader
+const loadingContainer = {
+    height: "100vh", 
+    width: "100vw", 
+    display: "flex", 
+    flexDirection: "column",
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#f8f9fa"
+};
+
+const spinnerStyle = {
+    border: "4px solid #f3f3f3",
+    borderTop: "4px solid #3498db",
+    borderRadius: "50%",
+    width: "40px",
+    height: "40px",
+    animation: "spin 1s linear infinite",
+};
+
+// Add keyframes for spinner
+if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+}

@@ -45,7 +45,7 @@ export default function StudentLayout() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       console.error("Logout error", err);
     }
@@ -77,7 +77,6 @@ export default function StudentLayout() {
 
         <nav style={{ flex: 1 }}>
           <NavItem to="/student/dashboard" label="Dashboard" />
-          <NavItem to="/student/basic-details" label="Edit Basic Details" />
           <NavItem to="/student/change-password" label="Change Password" />
           <NavItem to="/student/cover-letter" label="Upload Cover Letter" />
           <NavItem to="/student/applications" label="My Applications" />

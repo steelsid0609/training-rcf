@@ -1,3 +1,4 @@
+//src/pages/AuthRequest.jsx
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { sendSignInLinkToEmail } from "firebase/auth";

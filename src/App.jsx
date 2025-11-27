@@ -33,6 +33,8 @@ import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRej
 import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage";
 import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage";
 import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage";
+import FinishVerify from "./pages/FinishVerify";
+import AdminSlotsPage from "./pages/admin/AdminSlotsPage";
 
 // Admin pages
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -52,6 +54,7 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/finishVerify" element={<FinishVerify />} />
           </Route>
 
           {/* STUDENT DASHBOARD ROUTES */}
@@ -119,6 +122,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route element={<AdminLayout />}>
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/slots" element={<AdminSlotsPage />} />
               {/* later add more admin routes here, reusing supervisor pages + extra */}
             </Route>
           </Route>
