@@ -1,112 +1,272 @@
-// src/pages/supervisor/SupervisorAllApplicationsPage.jsx
 import React, { useEffect, useState } from "react";
-import { db } from "../../firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy } from "firebase/firestore";
+import { db } from "../../firebase"; // Removed .js extension to fix resolution
+import { collection, getDocs, query } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { useAuth } from "../../context/AuthContext";
 
 export default function SupervisorAllApplicationsPage() {
-  const { user } = useAuth();
   const [applications, setApplications] = useState([]);
+  const [slotsMap, setSlotsMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [working, setWorking] = useState(false);
-  
-  // Local state for the inputs
-  const [reasons, setReasons] = useState({}); 
-  const [statusUpdates, setStatusUpdates] = useState({});
 
-  useEffect(() => { loadPaymentApps(); }, []);
+  // --- FILTER STATES ---
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  async function loadPaymentApps() {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
     setLoading(true);
     try {
-      // Get apps that are either approved (waiting for payment) or accepted (payment done)
-      const q = query(
-        collection(db, "applications"),
-        where("status", "in", ["approved", "accepted"]),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(q);
-      setApplications(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // 1. Fetch All Applications
+      const appQuery = query(collection(db, "applications"));
+      
+      // 2. Fetch Slots for mapping
+      const slotQuery = query(collection(db, "trainingSlots"));
+
+      const [appSnap, slotSnap] = await Promise.all([
+        getDocs(appQuery),
+        getDocs(slotQuery)
+      ]);
+
+      // Process Slots into Map {id: label}
+      const sMap = {};
+      slotSnap.forEach((doc) => {
+        sMap[doc.id] = doc.data().label;
+      });
+      setSlotsMap(sMap);
+
+      // Process Applications
+      const apps = appSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      // Sort by Created Date (Newest First)
+      apps.sort((a, b) => {
+        const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return tB - tA;
+      });
+
+      setApplications(apps);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to load applications");
+      console.error("Error loading data:", err);
+      toast.error("Failed to load applications.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function updatePayment(app) {
-    const newStatus = statusUpdates[app.id] || app.paymentStatus || "pending";
-    const reason = reasons[app.id] || "";
-
-    if (newStatus === "rejected" && !reason.trim()) return toast.error("Rejection reason required");
-    
-    setWorking(true);
-    try {
-      const payload = {
-        paymentStatus: newStatus,
-        paymentRejectReason: "",
-        status: "approved" // Default back to approved
-      };
-
-      if (newStatus === "verified") {
-        payload.paymentVerifiedBy = user.uid;
-        payload.paymentVerifiedAt = serverTimestamp();
-        payload.status = "accepted"; // Move to next stage
-      } else if (newStatus === "rejected") {
-        payload.paymentRejectReason = reason;
-        payload.paymentReceiptNumber = null; // Clear receipt
+  // --- FILTER LOGIC ---
+  const filteredApplications = applications.filter((app) => {
+    // 1. Search Filter (Name or Email)
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const name = (app.studentName || "").toLowerCase();
+      const email = (app.email || "").toLowerCase();
+      if (!name.includes(term) && !email.includes(term)) {
+        return false;
       }
-
-      await updateDoc(doc(db, "applications", app.id), payload);
-      toast.success("Payment updated");
-      await loadPaymentApps();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setWorking(false);
     }
+
+    // 2. Type Filter
+    if (typeFilter !== "All" && app.internshipType !== typeFilter) {
+      return false;
+    }
+
+    // 3. Status Filter
+    if (statusFilter !== "All") {
+      const appStatus = (app.status || "pending").toLowerCase();
+      if (appStatus !== statusFilter.toLowerCase()) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Helper: Format Date
+  function formatDate(isoString) {
+    if (!isoString) return "-";
+    const parts = isoString.split("-");
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return isoString;
   }
 
-  if (loading) return <div>Loading...</div>;
+  // Helper: Status Badge Style
+  function getStatusStyle(status) {
+    const s = (status || "pending").toLowerCase();
+    const base = { padding: "4px 8px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px", textTransform: "uppercase" };
+    
+    if (s === "approved") return { ...base, background: "#d4edda", color: "#155724" };
+    if (s === "rejected") return { ...base, background: "#f8d7da", color: "#721c24" };
+    if (s === "completed") return { ...base, background: "#cce5ff", color: "#004085" };
+    if (s === "verification_pending") return { ...base, background: "#fff3cd", color: "#856404" };
+    
+    return { ...base, background: "#eee", color: "#555" }; 
+  }
+
+  if (loading) return <div style={{ padding: 30 }}>Loading all applications...</div>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Payment Verification</h2>
-      {applications.map(app => (
-        <div key={app.id} style={{ background: app.status === "accepted" ? "#f0fff0" : "#fff", padding: 18, marginBottom: 12, borderRadius: 10, boxShadow: "0 2px 5px rgba(0,0,0,0.1)" }}>
-          <div style={{ fontWeight: "bold" }}>{app.studentName}</div>
-          <div style={{ fontSize: 14 }}>Receipt: {app.paymentReceiptNumber || "Not uploaded yet"}</div>
-          
-          {app.status !== "accepted" ? (
-             <div style={{ marginTop: 10 }}>
-               <select 
-                 value={statusUpdates[app.id] || app.paymentStatus || "pending"} 
-                 onChange={(e) => setStatusUpdates({...statusUpdates, [app.id]: e.target.value})}
-                 style={{ padding: 8, marginRight: 10 }}
-               >
-                 <option value="pending">Pending</option>
-                 <option value="verified">Verified</option>
-                 <option value="rejected">Rejected</option>
-               </select>
-               
-               {(statusUpdates[app.id] === "rejected") && (
-                 <input 
-                   placeholder="Rejection Reason" 
-                   value={reasons[app.id] || ""}
-                   onChange={(e) => setReasons({...reasons, [app.id]: e.target.value})}
-                   style={{ padding: 8, marginRight: 10 }}
-                 />
-               )}
-               
-               <button onClick={() => updatePayment(app)} disabled={working} style={{ padding: "8px 12px", background: "#006400", color: "#fff", border: "none", borderRadius: 5, cursor: "pointer"}}>Update</button>
-             </div>
-          ) : (
-            <div style={{ color: "green", fontWeight: "bold", marginTop: 5 }}>✅ Payment Verified</div>
-          )}
+    <div style={{ padding: 30 }}>
+      {/* HEADER WITH FILTERS */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 15 }}>
+        <h2 style={{ margin: 0, color: "#333" }}>All Applications List</h2>
+        
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+           {/* Search Input */}
+           <input 
+             placeholder="Search Name or Email..." 
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+             style={filterInput}
+           />
+
+           {/* Type Filter */}
+           <select 
+             value={typeFilter} 
+             onChange={(e) => setTypeFilter(e.target.value)} 
+             style={filterSelect}
+           >
+             <option value="All">All Types</option>
+             <option value="Industrial Training">Industrial Training</option>
+             <option value="Summer Internship">Summer Internship</option>
+             <option value="Project Work">Project Work</option>
+           </select>
+
+           {/* Status Filter */}
+           <select 
+             value={statusFilter} 
+             onChange={(e) => setStatusFilter(e.target.value)} 
+             style={filterSelect}
+           >
+             <option value="All">All Status</option>
+             <option value="pending">Pending</option>
+             <option value="approved">Approved</option>
+             <option value="rejected">Rejected</option>
+             <option value="completed">Completed</option>
+             <option value="verification_pending">Payment Verification</option>
+           </select>
         </div>
-      ))}
+      </div>
+      
+      <div style={{ overflowX: "auto", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
+          <thead>
+            <tr style={{ background: "#f4f4f4", borderBottom: "2px solid #ddd", textAlign: "left" }}>
+              <th style={thStyle}>Student</th>
+              <th style={thStyle}>Type</th>
+              <th style={thStyle}>College</th>
+              <th style={thStyle}>Slot & Duration</th>
+              <th style={thStyle}>Dates</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}>Payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredApplications.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ padding: "30px", textAlign: "center", color: "#666" }}>
+                  No applications match your filters.
+                </td>
+              </tr>
+            ) : (
+              filteredApplications.map((app) => {
+                const slotLabel = (app.durationDetails?.slotId && slotsMap[app.durationDetails.slotId]) 
+                  ? slotsMap[app.durationDetails.slotId] 
+                  : "Custom";
+                
+                const durationTxt = app.durationDetails 
+                  ? `${app.durationDetails.value} ${app.durationDetails.type}` 
+                  : "-";
+
+                return (
+                  <tr key={app.id} style={{ borderBottom: "1px solid #eee", fontSize: "14px" }}>
+                    {/* Student */}
+                    <td style={tdStyle}>
+                      <div style={{ fontWeight: "bold", color: "#333" }}>{app.studentName}</div>
+                      <div style={{ fontSize: "12px", color: "#666" }}>{app.email}</div>
+                      <div style={{ fontSize: "12px", color: "#666" }}>{app.phone}</div>
+                    </td>
+
+                    {/* Type */}
+                    <td style={tdStyle}>{app.internshipType}</td>
+
+                    {/* College */}
+                    <td style={tdStyle}>
+                      {app.collegeName || (app.college && app.college.name) || "-"}
+                    </td>
+
+                    {/* Slot & Duration */}
+                    <td style={tdStyle}>
+                      <div style={{ color: "#0056b3", fontWeight: "500" }}>{slotLabel}</div>
+                      <div style={{ fontSize: "12px", color: "#555" }}>({durationTxt})</div>
+                    </td>
+
+                    {/* Dates */}
+                    <td style={tdStyle}>
+                      {formatDate(app.preferredStartDate)} <br/> 
+                      <span style={{color:"#777"}}>to</span> <br/> 
+                      {formatDate(app.preferredEndDate)}
+                    </td>
+
+                    {/* Status */}
+                    <td style={tdStyle}>
+                      <span style={getStatusStyle(app.status)}>
+                        {app.status || "Pending"}
+                      </span>
+                    </td>
+
+                    {/* Payment */}
+                    <td style={tdStyle}>
+                      {app.paymentStatus ? (
+                        <span style={{ 
+                          fontWeight: "bold", 
+                          color: app.paymentStatus === "paid" || app.paymentStatus === "verified" ? "green" : "orange" 
+                        }}>
+                          {app.paymentStatus.replace("_", " ").toUpperCase()}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#999" }}>-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
+
+// --- Styles ---
+const thStyle = {
+  padding: "12px 15px",
+  color: "#444",
+  fontSize: "13px",
+  fontWeight: "bold"
+};
+
+const tdStyle = {
+  padding: "12px 15px",
+  verticalAlign: "top",
+  color: "#333"
+};
+
+const filterInput = {
+  padding: "8px 12px",
+  borderRadius: "6px",
+  border: "1px solid #ccc",
+  minWidth: "200px"
+};
+
+const filterSelect = {
+  padding: "8px 12px",
+  borderRadius: "6px",
+  border: "1px solid #ccc",
+  cursor: "pointer",
+  minWidth: "150px"
+};

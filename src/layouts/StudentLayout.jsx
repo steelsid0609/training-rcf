@@ -80,6 +80,7 @@ export default function StudentLayout() {
           <NavItem to="/student/change-password" label="Change Password" />
           <NavItem to="/student/cover-letter" label="Upload Cover Letter" />
           <NavItem to="/student/applications" label="My Applications" />
+          <NavItem to="/student/posting-letter" label="Posting Letter" />
         </nav>
 
         <button

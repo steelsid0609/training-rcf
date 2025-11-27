@@ -12,7 +12,6 @@ import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 
 import StudentApplicationList from "../../components/StudentApplicationList.jsx";
-import StudentUploadCoverLetterModal from "../../components/StudentUploadCoverLetterModal.jsx";
 import StudentApplyForm from "../../components/StudentApplyForm.jsx";
 
 export default function StudentApplicationsPage() {
@@ -117,9 +116,8 @@ export default function StudentApplicationsPage() {
   return (
     <div style={{ padding: 20 }}>
       <h2>My Applications</h2>
-      <p style={{ marginBottom: 16 }}>
-        View your applications and upload cover letters. You can apply only if
-        you have no active or rejected applications.
+      <p style={{ marginBottom: 16, marginTop: 6, color: "#666" }}>
+        View your applications
       </p>
 
       {/* APPLY BUTTON – only when no active/rejected app AND form not opened */}
@@ -157,18 +155,6 @@ export default function StudentApplicationsPage() {
             applications={applications}
             setUploadModalApp={setUploadModalApp}
           />
-
-          {uploadModalApp && (
-            <StudentUploadCoverLetterModal
-              app={uploadModalApp}
-              user={user}
-              onClose={() => setUploadModalApp(null)}
-              onComplete={async () => {
-                setUploadModalApp(null);
-                if (user) await loadApplications(user.uid);
-              }}
-            />
-          )}
         </>
       )}
     </div>

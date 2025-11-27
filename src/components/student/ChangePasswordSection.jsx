@@ -27,10 +27,10 @@ export default function ChangePasswordSection({ compact = false }) {
 
   return (
     <div>
-      {!compact && <h2>Change Password</h2>}
+      {!compact && <h1>Change Password</h1>}
       {compact && <h3>Change Password</h3>}
 
-      <p style={{ marginBottom: 8 }}>
+      <p style={{ marginBottom: 8, marginTop: 4 }}>
         Click below to receive a password reset link on your registered email:
         <strong> {user.email}</strong>
       </p>

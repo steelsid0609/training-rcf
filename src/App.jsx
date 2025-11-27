@@ -23,6 +23,7 @@ import StudentBasicDetailsPage from "./pages/student/StudentBasicDetailsPage";
 import StudentChangePasswordPage from "./pages/student/StudentChangePasswordPage";
 import StudentCoverLetterPage from "./pages/student/StudentCoverLetterPage";
 import StudentApplicationsPage from "./pages/student/StudentApplicationsPage";
+import StudentPostingLetterPage from "./pages/student/StudentPostingLetterPage.jsx";
 
 // Supervisor pages
 import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage";
@@ -76,6 +77,10 @@ function App() {
               <Route
                 path="/student/applications"
                 element={<StudentApplicationsPage />}
+              />
+              <Route
+                path="/student/posting-letter"
+                element={<StudentPostingLetterPage />}
               />
             </Route>
           </Route>

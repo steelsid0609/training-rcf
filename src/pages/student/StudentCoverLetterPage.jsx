@@ -49,8 +49,8 @@ export default function StudentCoverLetterPage() {
   return (
     <div style={{ padding: 20 }}>
       <h2>Upload Recommendation Letters</h2>
-      <p style={{ color: "#666", marginBottom: 20 }}>
-        Here you can upload or view the recommendation letters for your active applications.
+      <p style={{ color: "#666", marginBottom: 20, marginTop: 10 }}>
+        Upload or view the recommendation letters for your active applications.
       </p>
 
       {applications.length === 0 ? (

@@ -1,48 +1,92 @@
-// src/components/StudentApplyForm.jsx
 import { useState, useEffect } from "react";
 import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 
-// Environment variables
-const CLOUDINARY_UPLOAD_URL = import.meta.env.VITE_CLOUDINARY_UPLOAD_URL;
-const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+// --- CLOUDINARY CONFIGURATION ---
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-// --- HELPER: FORMAT DATE (YYYY-MM-DD -> DD/MM/YYYY) ---
+// Construct the correct API URL
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+// --- HELPER: FORMAT DATE FOR DISPLAY (YYYY-MM-DD -> DD/MM/YYYY) ---
 function formatDateDisplay(isoString) {
   if (!isoString) return "";
-  const parts = isoString.split("-"); // [YYYY, MM, DD]
+  const parts = isoString.split("-"); // Expects [YYYY, MM, DD]
   if (parts.length !== 3) return isoString;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+// --- HELPER: UPLOAD TO CLOUDINARY ---
+async function uploadToCloudinary(file) {
+  if (!file) return null; // Optional file not provided
+  
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    throw new Error("Missing Cloudinary configuration in .env file");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+  
+  // Log for debugging
+  console.log("Uploading to:", CLOUDINARY_UPLOAD_URL);
+
+  const res = await fetch(CLOUDINARY_UPLOAD_URL, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Cloudinary Error:", text);
+    throw new Error(`Upload failed: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+// --- STYLES ---
 const inputStyle = {
-  padding: "8px",
-  margin: "5px 0 10px 0",
+  padding: "10px",
+  margin: "5px 0 15px 0",
   border: "1px solid #ccc",
   borderRadius: "4px",
   boxSizing: "border-box",
   display: "block",
+  width: "100%",
+  fontSize: "14px"
+};
+
+const labelStyle = {
+  fontWeight: "600",
+  fontSize: "13px",
+  color: "#333",
+  display: "block",
+  marginBottom: "4px"
 };
 
 const card = {
-  padding: "20px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-  maxWidth: "600px",
+  padding: "30px",
+  borderRadius: "10px",
+  boxShadow: "0 4px 15px rgba(0,0,0,0.08)",
+  maxWidth: "650px",
   margin: "20px auto",
   background: "#fff",
 };
 
 const applyBtn = {
-  padding: "10px 20px",
-  borderRadius: "4px",
+  padding: "12px 24px",
+  borderRadius: "6px",
   border: "none",
   cursor: "pointer",
   fontWeight: "bold",
-  background: "#007bff",
+  background: "#006400",
   color: "white",
-  transition: "background 0.3s",
+  fontSize: "15px",
+  transition: "background 0.2s",
 };
 
 export default function StudentApplyForm({
@@ -61,12 +105,12 @@ export default function StudentApplyForm({
     college: { name: "", address: "", pincode: "", contact: "" },
     internshipType: "",
     
-    // SLOTS
+    // SLOTS & DURATION
     slotId: "",
     durationType: "months",
     durationValue: "",
     
-    // CALCULATED (Stored as YYYY-MM-DD for logic, formatted for display)
+    // CALCULATED DATES
     preferredStartDate: "",
     preferredEndDate: "",
     
@@ -74,17 +118,19 @@ export default function StudentApplyForm({
     confirmationNumber: "",
   });
 
-  const [coverLetterFile, setCoverLetterFile] = useState(null);
+  // FILES
+  const [coverLetterFile, setCoverLetterFile] = useState(null); // Optional
+
   const [submitting, setSubmitting] = useState(false);
   const [showOtherCollege, setShowOtherCollege] = useState(false);
   
-  // Data Lists
+  // DATA
   const [masterCollegeList, setMasterCollegeList] = useState([]);
   const [loadingColleges, setLoadingColleges] = useState(true);
   const [slots, setSlots] = useState([]); 
   const [loadingSlots, setLoadingSlots] = useState(true);
 
-  // 1. Refresh basic fields
+  // 1. Sync Profile Data
   useEffect(() => {
     setForm((f) => ({
       ...f,
@@ -95,7 +141,7 @@ export default function StudentApplyForm({
     }));
   }, [profile, user]);
 
-  // 2. Load Colleges AND Filtered Slots
+  // 2. Load Data & Filter Slots
   useEffect(() => {
     let cancelled = false;
 
@@ -103,7 +149,7 @@ export default function StudentApplyForm({
       setLoadingColleges(true);
       setLoadingSlots(true);
       try {
-        // Fetch Colleges
+        // A. Fetch Colleges
         const colSnap = await getDocs(collection(db, "colleges_master"));
         const cols = [];
         colSnap.forEach((d) => {
@@ -111,35 +157,34 @@ export default function StudentApplyForm({
           cols.push({ id: d.id, name: data.name || data.collegeName || "" });
         });
 
-        // Fetch Slots
+        // B. Fetch Slots
         const slotRef = collection(db, "trainingSlots");
         const slotSnap = await getDocs(slotRef);
         let slotList = slotSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // --- FILTERING LOGIC ---
+        // C. Filter Slots
         const today = new Date();
         today.setHours(0, 0, 0, 0); 
 
         slotList = slotList.filter(s => {
-            const isActive = s.isActive !== false;
-            if (!isActive) return false;
+            if (s.isActive === false) return false;
 
             const start = new Date(s.startDate);
             const year = start.getFullYear();
             const month = start.getMonth();
             const day = start.getDate();
 
-            let end = new Date(year, month, 1); 
+            let slotEnd = new Date(year, month, 1); 
             if (day <= 15) {
-                end = new Date(year, month, 15);
+                slotEnd = new Date(year, month, 15);
             } else {
-                end = new Date(year, month + 1, 0); 
+                slotEnd = new Date(year, month + 1, 0); 
             }
-            end.setHours(23, 59, 59, 999);
-            return today <= end;
+            slotEnd.setHours(23, 59, 59, 999);
+
+            return today <= slotEnd;
         });
 
-        // Sort by startDate
         slotList.sort((a, b) => a.startDate.localeCompare(b.startDate));
 
         if (!cancelled) {
@@ -159,18 +204,13 @@ export default function StudentApplyForm({
     return () => { cancelled = true; };
   }, []);
 
-  // 3. Toggle "Other" college fields
+  // 3. Toggle College Fields
   useEffect(() => {
     setShowOtherCollege(form.collegeSelected === "Other");
   }, [form.collegeSelected]);
 
-  // 4. Calculate Dates
+  // 4. Calculate Dates Logic
   useEffect(() => {
-    calculateDates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.slotId, form.durationType, form.durationValue, slots]);
-
-  function calculateDates() {
     if (!form.slotId || !form.durationValue) {
       setForm(f => ({ ...f, preferredStartDate: "", preferredEndDate: "" }));
       return;
@@ -193,17 +233,15 @@ export default function StudentApplyForm({
       end.setDate(end.getDate() + val);
     }
 
-    const startStr = start.toISOString().split('T')[0]; // Keep logic as YYYY-MM-DD
+    const startStr = start.toISOString().split('T')[0];
     const endStr = end.toISOString().split('T')[0];
 
     setForm(f => ({ ...f, preferredStartDate: startStr, preferredEndDate: endStr }));
-  }
+  }, [form.slotId, form.durationType, form.durationValue, slots]);
 
   const filteredColleges = masterCollegeList
-    .filter((c) =>
-      c.name.toLowerCase().includes(form.collegeSearch.toLowerCase())
-    )
-    .slice(0, 10);
+    .filter((c) => c.name.toLowerCase().includes(form.collegeSearch.toLowerCase()))
+    .slice(0, 8);
 
   function handleCollegeSelect(name) {
     setForm((f) => ({
@@ -214,39 +252,45 @@ export default function StudentApplyForm({
     }));
   }
 
+  function handleFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) {
+      setCoverLetterFile(null);
+      return;
+    }
+    // Validations
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size exceeds 2MB limit.");
+      e.target.value = "";
+      return;
+    }
+    const validTypes = ["image/jpeg", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Invalid file type. Only JPG/JPEG allowed.");
+      e.target.value = "";
+      return;
+    }
+    setCoverLetterFile(file);
+  }
+
   function validate() {
-    if (!form.fullname.trim()) return "Full name is required.";
-    if (!/^\d{10}$/.test(form.phone)) return "Enter a valid 10-digit mobile number.";
-    if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) return "Enter a valid email address.";
-    if (!form.discipline.trim()) return "Please provide your discipline/branch.";
+    if (!form.fullname.trim()) return "Profile incomplete: Full Name missing.";
+    if (!form.phone) return "Profile incomplete: Phone missing.";
+    if (!form.collegeSelected) return "Please select a college.";
     
-    if (!form.collegeSelected) return "Please select or provide your college.";
-
     if (form.collegeSelected === "Other") {
-      if (!form.college.name.trim()) return "Please enter your college name.";
-      if (!form.college.address.trim()) return "Please enter your college address.";
-      if (!/^\d{6}$/.test(form.college.pincode)) return "Enter a valid 6-digit college pincode.";
-      if (!/^\d{7,15}$/.test(form.college.contact.replace(/\D/g, ""))) return "Enter a valid college contact number.";
+      if (!form.college.name.trim()) return "Enter college name.";
+      if (!form.college.pincode) return "Enter college pincode.";
     }
 
-    if (!form.internshipType) return "Please select the internship type.";
+    if (!form.internshipType) return "Select Internship Type.";
+    if (!form.slotId) return "Select a Training Slot.";
+    if (!form.durationValue) return "Enter duration value.";
     
-    // Slot Validation
-    if (!form.slotId) return "Please select a Training Slot.";
-    if (!form.durationValue) return "Please enter the training duration.";
-    if (!form.preferredStartDate || !form.preferredEndDate) return "Invalid date calculation.";
-
-    if (!form.receivedConfirmation) return "Please indicate if you've received confirmation.";
-    if (form.receivedConfirmation === "Yes") {
-      if (!/^[A-Za-z0-9\-]{4,40}$/.test(form.confirmationNumber.trim()))
-        return "Please enter a valid confirmation number.";
+    if (form.receivedConfirmation === "Yes" && !form.confirmationNumber.trim()) {
+        return "Enter Confirmation Number.";
     }
 
-    if (coverLetterFile) {
-      if (coverLetterFile.size > 2 * 1024 * 1024) return "Cover letter file must be under 2MB.";
-      const allowedTypes = ["image/jpeg", "image/jpg"];
-      if (!allowedTypes.includes(coverLetterFile.type)) return "Invalid file type. Please upload a JPG or JPEG.";
-    }
     return null;
   }
 
@@ -257,51 +301,36 @@ export default function StudentApplyForm({
 
     setSubmitting(true);
     try {
-      let coverLetterURL = "";
-
+      toast.info("Submitting application...");
+      
+      // Upload Cover Letter if exists (Optional)
+      let coverUrl = "";
       if (coverLetterFile) {
-        toast.info("Uploading cover letter...");
-        const formData = new FormData();
-        formData.append("file", coverLetterFile);
-        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-        const res = await fetch(CLOUDINARY_UPLOAD_URL, {
-          method: "POST",
-          body: formData,
-        });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error("Cover letter upload failed: " + text);
-        }
-        const data = await res.json();
-        coverLetterURL = data.secure_url;
-        toast.info("Upload successful.");
+        coverUrl = await uploadToCloudinary(coverLetterFile);
       }
 
+      // Handle College
       let tempCollegeRef = null;
       if (form.collegeSelected === "Other") {
-        const sanitizedContact = (form.college.contact || "").replace(/\D/g, "");
-        const collegePayload = {
+        const colPayload = {
           name: form.college.name.trim(),
           address: form.college.address.trim(),
           pincode: form.college.pincode,
-          contact: sanitizedContact,
+          contact: form.college.contact,
           submittedBy: user.uid,
-          submittedByEmail: user?.email || "",
+          submittedByEmail: user.email,
           submittedAt: serverTimestamp(),
           status: "pending",
         };
-        const colDoc = await addDoc(collection(db, "colleges_temp"), collegePayload);
-        tempCollegeRef = {
-          id: colDoc.id,
-          path: `colleges_temp/${colDoc.id}`,
-        };
+        const docRef = await addDoc(collection(db, "colleges_temp"), colPayload);
+        tempCollegeRef = { id: docRef.id, path: `colleges_temp/${docRef.id}` };
       }
 
       const collegeInfo = form.collegeSelected === "Other"
           ? { name: form.college.name.trim(), tempCollegeRef }
           : { name: form.collegeSelected };
 
+      // Prepare Application Data
       const payload = {
         createdBy: user.uid,
         uid: user.uid,
@@ -315,9 +344,7 @@ export default function StudentApplyForm({
         
         internshipType: form.internshipType,
         
-        // We save dates as YYYY-MM-DD (easier for backend/sorting)
-        // If you specifically need DD/MM/YYYY in database, change here, 
-        // but typically database uses ISO and frontend formats it.
+        // Dates (YYYY-MM-DD)
         preferredStartDate: form.preferredStartDate,
         preferredEndDate: form.preferredEndDate,
         
@@ -329,22 +356,23 @@ export default function StudentApplyForm({
 
         receivedConfirmation: form.receivedConfirmation === "Yes",
         confirmationNumber: form.receivedConfirmation === "Yes" ? form.confirmationNumber.trim() : "",
-        coverLetterURL,
-        createdAt: serverTimestamp(),
+        
+        coverLetterURL: coverUrl || "", 
+        
         status: "pending",
-        paymentStatus: "pending"
+        paymentStatus: "pending",
+        createdAt: serverTimestamp(),
       };
 
       await addDoc(collection(db, "applications"), payload);
-      toast.success("Application submitted successfully.");
+      
+      toast.success("Application Submitted Successfully! 🚀");
       setShowApplyForm(false);
+      if (reload) await reload(user.uid);
 
-      if (reload) {
-        await reload(user.uid);
-      }
     } catch (err) {
-      console.error("Failed to Submit Application:", err);
-      toast.error("Failed to Submit: " + (err.message || err.code));
+      console.error(err);
+      toast.error("Submission Failed: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -352,43 +380,47 @@ export default function StudentApplyForm({
 
   return (
     <div style={card}>
-      <h3>Apply for Internship / OJT / VT</h3>
+      <h2 style={{ margin: "0 0 20px 0", color: "#006400", borderBottom: "2px solid #eee", paddingBottom: "10px" }}>
+        New Application
+      </h2>
+      
       <form onSubmit={handleSubmit}>
-        <label>Full Name</label>
-        <input style={{ ...inputStyle, width: "100%" }} value={form.fullname} readOnly />
-
-        <label>Discipline / Branch</label>
-        <input style={{ ...inputStyle, width: "100%" }} value={form.discipline} readOnly />
-
-        <div style={{display: 'flex', gap: 10}}>
-            <div style={{flex: 1}}>
-                <label>Mobile number</label>
-                <input style={{ ...inputStyle, width: "100%" }} value={form.phone} readOnly />
-            </div>
-            <div style={{flex: 2}}>
-                <label>Email</label>
-                <input style={{ ...inputStyle, width: "100%" }} value={form.email} readOnly />
+        {/* 1. Personal Details */}
+        <div style={{ background: "#f9f9f9", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
+            <h4 style={{ margin: "0 0 10px 0", color: "#555" }}>Personal Details</h4>
+            <label style={labelStyle}>Full Name</label>
+            <input style={{...inputStyle, background: "#e9ecef"}} value={form.fullname} readOnly />
+            
+            <div style={{ display: "flex", gap: "15px" }}>
+                <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>Phone</label>
+                    <input style={{...inputStyle, background: "#e9ecef"}} value={form.phone} readOnly />
+                </div>
+                <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>Discipline</label>
+                    <input style={{...inputStyle, background: "#e9ecef"}} value={form.discipline} readOnly />
+                </div>
             </div>
         </div>
 
-        {/* --- COLLEGE SEARCH SECTION --- */}
-        <label>College (search & select)</label>
+        {/* 2. College Selection */}
+        <label style={labelStyle}>Select College</label>
         <input
-          style={{ ...inputStyle, width: "100%" }}
-          placeholder={loadingColleges ? "Loading colleges..." : "Search your college..."}
+          style={inputStyle}
+          placeholder={loadingColleges ? "Loading..." : "Type to search college..."}
           value={form.collegeSearch}
           onChange={(e) => setForm((f) => ({ ...f, collegeSearch: e.target.value }))}
         />
-
+        
         {form.collegeSearch && (
-          <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid #eee", padding: 6, marginBottom: 8 }}>
+          <div style={{ maxHeight: "150px", overflowY: "auto", border: "1px solid #eee", marginBottom: "15px", borderRadius: "4px" }}>
             {!loadingColleges && filteredColleges.map((c) => (
               <div
                 key={c.id}
                 onClick={() => handleCollegeSelect(c.name)}
                 style={{
-                  padding: "6px 8px", cursor: "pointer", borderRadius: 4, marginBottom: 4,
-                  background: form.collegeSelected === c.name ? "#f0f8ff" : "transparent",
+                  padding: "8px", cursor: "pointer", borderBottom: "1px solid #f0f0f0",
+                  background: form.collegeSelected === c.name ? "#e8f5e9" : "#fff"
                 }}
               >
                 {c.name}
@@ -396,72 +428,43 @@ export default function StudentApplyForm({
             ))}
             <div
               onClick={() => handleCollegeSelect("Other")}
-              style={{
-                padding: "6px 8px", cursor: "pointer", borderRadius: 4, fontWeight: 600,
-                background: form.collegeSelected === "Other" ? "#f0f8ff" : "transparent",
-              }}
+              style={{ padding: "8px", cursor: "pointer", fontWeight: "bold", color: "#006400" }}
             >
-              Other
+              + My college is not listed (Select Other)
             </div>
           </div>
         )}
 
         {showOtherCollege && (
-          <div style={{border: '1px solid #eee', padding: 10, borderRadius: 6, marginBottom: 10}}>
-            <h4 style={{ margin: "0 0 10px 0" }}>College details (Other)</h4>
-            <input
-              style={{ ...inputStyle, width: "100%" }}
-              value={form.college.name}
-              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, name: e.target.value } }))}
-              placeholder="College name"
-            />
-            <input
-              style={{ ...inputStyle, width: "100%" }}
-              value={form.college.address}
-              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, address: e.target.value } }))}
-              placeholder="Address"
-            />
-            <div style={{display: 'flex', gap: 10}}>
-                <input
-                  style={{ ...inputStyle, width: "100%" }}
-                  value={form.college.pincode}
-                  onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) } }))}
-                  placeholder="Pincode"
-                />
-                <input
-                  style={{ ...inputStyle, width: "100%" }}
-                  value={form.college.contact}
-                  onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, contact: e.target.value } }))}
-                  placeholder="Contact"
-                />
-            </div>
+          <div style={{ border: "1px dashed #ccc", padding: "15px", borderRadius: "6px", marginBottom: "20px", background: "#fff8e1" }}>
+            <label style={labelStyle}>College Name</label>
+            <input style={inputStyle} value={form.college.name} onChange={e => setForm({...form, college: {...form.college, name: e.target.value}})} />
+            
+            <label style={labelStyle}>Pincode</label>
+            <input style={inputStyle} value={form.college.pincode} onChange={e => setForm({...form, college: {...form.college, pincode: e.target.value}})} />
+            
+            <label style={labelStyle}>Address</label>
+            <input style={inputStyle} value={form.college.address} onChange={e => setForm({...form, college: {...form.college, address: e.target.value}})} />
           </div>
         )}
 
-        <label style={{ marginTop: 8 }}>Apply for</label>
-        <select
-          style={{ ...inputStyle, width: "100%" }}
-          value={form.internshipType}
-          onChange={(e) => setForm((f) => ({ ...f, internshipType: e.target.value }))}
-        >
-          <option value="">Select</option>
-          <option>Industrial Training</option>
-          <option>Summer Internship</option>
-          <option>Project Work</option>
+        {/* 3. Training Details */}
+        <label style={labelStyle}>Internship Type</label>
+        <select style={inputStyle} value={form.internshipType} onChange={e => setForm({...form, internshipType: e.target.value})}>
+            <option value="">-- Select --</option>
+            <option>Industrial Training</option>
+            <option>Summer Internship</option>
+            <option>Project Work</option>
         </select>
 
-        {/* --- SLOT & DURATION SECTION --- */}
-        <div style={{background: '#f9f9f9', padding: 15, borderRadius: 8, margin: '15px 0'}}>
-            <label>Select Training Slot (Future & Active Only)</label>
-            <select
-                style={{...inputStyle, width: '100%'}}
-                value={form.slotId}
-                onChange={e => setForm(f => ({...f, slotId: e.target.value}))}
-            >
-                <option value="">-- Choose Start Date --</option>
-                {loadingSlots ? <option>Loading...</option> : 
+        <div style={{ background: "#e8f5e9", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid #c8e6c9" }}>
+            <h4 style={{ margin: "0 0 10px 0", color: "#006400" }}>Training Duration & Slot</h4>
+            
+            <label style={labelStyle}>Select Start Date Slot (Available Slots)</label>
+            <select style={inputStyle} value={form.slotId} onChange={e => setForm({...form, slotId: e.target.value})}>
+                <option value="">-- Select Start Date --</option>
+                {loadingSlots ? <option>Loading slots...</option> : 
                     slots.map(s => (
-                        // CHANGED: Format slot display date here
                         <option key={s.id} value={s.id}>
                             {s.label} (Starts: {formatDateDisplay(s.startDate)})
                         </option>
@@ -469,109 +472,64 @@ export default function StudentApplyForm({
                 }
             </select>
 
-            <div style={{display: 'flex', gap: 10, marginTop: 10}}>
-                <div style={{flex: 1}}>
-                    <label>Duration Unit</label>
-                    <select
-                        style={{...inputStyle, width: '100%'}}
-                        value={form.durationType}
-                        onChange={e => setForm(f => ({...f, durationType: e.target.value}))}
-                    >
+            <div style={{ display: "flex", gap: "15px" }}>
+                <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>Select: Months / Weeks / Days</label>
+                    <select style={inputStyle} value={form.durationType} onChange={e => setForm({...form, durationType: e.target.value})}>
                         <option value="months">Months</option>
                         <option value="weeks">Weeks</option>
                         <option value="days">Days</option>
                     </select>
                 </div>
-                <div style={{flex: 1}}>
-                    <label>Duration Value</label>
-                    <input 
-                        type="number"
-                        min="1"
-                        style={{...inputStyle, width: '100%'}}
-                        value={form.durationValue}
-                        onChange={e => setForm(f => ({...f, durationValue: e.target.value}))}
-                        placeholder="e.g. 2"
-                    />
+                <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>Duration</label>
+                    <input type="number" min="1" style={inputStyle} value={form.durationValue} onChange={e => setForm({...form, durationValue: e.target.value})} placeholder="e.g. 2" />
                 </div>
             </div>
 
-            <div style={{display: 'flex', gap: 10, marginTop: 10}}>
-                <div style={{flex: 1}}>
-                    <label>Start Date</label>
-                    <input 
-                        // CHANGED: Type="text" and formatted value
-                        type="text"
-                        style={{...inputStyle, width: '100%', background: '#eee'}}
-                        value={formatDateDisplay(form.preferredStartDate)}
-                        readOnly
-                        placeholder="Auto-calculated"
-                    />
+            <div style={{ display: "flex", gap: "15px", marginTop: "5px" }}>
+                <div style={{ flex: 1 }}>
+                    <label style={{...labelStyle, color: "#555"}}>Start Date</label>
+                    <input type="text" style={{...inputStyle, background: "#fff", fontWeight: "bold"}} value={formatDateDisplay(form.preferredStartDate)} readOnly placeholder="--" />
                 </div>
-                <div style={{flex: 1}}>
-                    <label>End Date</label>
-                    <input 
-                        // CHANGED: Type="text" and formatted value
-                        type="text"
-                        style={{...inputStyle, width: '100%', background: '#eee'}}
-                        value={formatDateDisplay(form.preferredEndDate)}
-                        readOnly
-                        placeholder="Auto-calculated"
-                    />
+                <div style={{ flex: 1 }}>
+                    <label style={{...labelStyle, color: "#555"}}>End Date</label>
+                    <input type="text" style={{...inputStyle, background: "#fff", fontWeight: "bold", color: "#006400"}} value={formatDateDisplay(form.preferredEndDate)} readOnly placeholder="--" />
                 </div>
             </div>
         </div>
 
-        <label>Recommendation Letter (JPG/JPEG, max 2MB)</label>
-        <input
-          type="file"
-          style={{ ...inputStyle, width: "100%", padding: 5 }}
-          accept="image/jpeg"
-          onChange={(e) => setCoverLetterFile(e.target.files[0] || null)}
+        {/* 4. Documents */}
+        <label style={labelStyle}>Cover Letter (Optional, JPG/JPEG only, Max 2MB)</label>
+        <input 
+            type="file" 
+            accept="image/jpeg, image/jpg" 
+            style={inputStyle} 
+            onChange={handleFileChange} 
         />
 
-        <label>Already received confirmation?</label>
-        <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-          <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input
-              type="radio"
-              checked={form.receivedConfirmation === "Yes"}
-              onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "Yes" }))}
-            /> Yes
-          </label>
-          <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input
-              type="radio"
-              checked={form.receivedConfirmation === "No"}
-              onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "No", confirmationNumber: "" }))}
-            /> No
-          </label>
+        {/* 5. Confirmation */}
+        <label style={labelStyle}>Do you already have a Confirmation Number?</label>
+        <div style={{ marginBottom: "15px", display: "flex", gap: "20px" }}>
+            <label><input type="radio" checked={form.receivedConfirmation === "Yes"} onChange={() => setForm({...form, receivedConfirmation: "Yes"})} /> Yes</label>
+            <label><input type="radio" checked={form.receivedConfirmation === "No"} onChange={() => setForm({...form, receivedConfirmation: "No", confirmationNumber: ""})} /> No</label>
         </div>
 
         {form.receivedConfirmation === "Yes" && (
-          <>
-            <label>Confirmation number</label>
-            <input
-              style={inputStyle}
-              value={form.confirmationNumber}
-              onChange={(e) => setForm((f) => ({ ...f, confirmationNumber: e.target.value }))}
-              placeholder="Confirmation number"
-              required
-            />
-          </>
+            <>
+                <label style={labelStyle}>Enter Confirmation Number</label>
+                <input style={inputStyle} value={form.confirmationNumber} onChange={e => setForm({...form, confirmationNumber: e.target.value})} />
+            </>
         )}
 
-        <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-          <button type="submit" disabled={submitting} style={applyBtn}>
-            {submitting ? "Submitting..." : "Submit Application"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowApplyForm(false)}
-            style={{ ...applyBtn, background: "#6c757d", marginLeft: 10 }}
-          >
-            Cancel
-          </button>
+        {/* Actions */}
+        <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <button type="button" onClick={() => setShowApplyForm(false)} style={{ ...applyBtn, background: "#6c757d" }}>Cancel</button>
+            <button type="submit" disabled={submitting} style={{ ...applyBtn, opacity: submitting ? 0.7 : 1 }}>
+                {submitting ? "Submitting..." : "Submit Application"}
+            </button>
         </div>
+
       </form>
     </div>
   );

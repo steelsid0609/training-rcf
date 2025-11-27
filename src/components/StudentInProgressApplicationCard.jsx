@@ -10,7 +10,7 @@ export default function StudentInProgressApplicationCard({
 
   return (
     <div style={{ padding: 20, background: "#fff", borderRadius: 8 }}>
-      <h3>Application In Progress ⏳</h3>
+      <h3>Application</h3>
       <div>Application Type: {app.internshipType || app.id}</div>
       <div>Status: {app.status}</div>
 
