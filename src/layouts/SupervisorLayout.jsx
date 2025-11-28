@@ -70,6 +70,7 @@ export default function SupervisorLayout() {
             <NavItem to="/supervisor/applications/pending" label="Pending Reviews" />
             <NavItem to="/supervisor/applications/all" label="Payment Verification" />
             <NavItem to="/supervisor/current-trainees" label="Current Trainees" />
+            {/* NavItem to "/supervisor/applications/completed" is REMOVED */}
             <NavItem to="/supervisor/applications/rejected" label="Rejected Archive" />
             
             <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Reports</div>
@@ -82,9 +83,13 @@ export default function SupervisorLayout() {
             </nav>
 
             <div style={{ marginTop: "auto" }}>
-            <button onClick={handleLogout} className="btn-sidebar">
-                Sign Out
-            </button>
+              {/* Added user email display here */}
+              <div style={{ fontSize: 13, textAlign: "center", marginBottom: 10, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}>
+                  {user?.email}
+              </div>
+              <button onClick={handleLogout} className="btn-sidebar">
+                  Sign Out
+              </button>
             </div>
         </div>
       </aside>

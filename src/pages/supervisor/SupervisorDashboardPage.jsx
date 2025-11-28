@@ -6,31 +6,39 @@ import { useNavigate } from "react-router-dom";
 export default function SupervisorDashboardPage() {
   const nav = useNavigate();
   const [stats, setStats] = useState({
-    pending: 0,
-    approved: 0, // Waiting for payment
-    confirmation: 0, // Waiting for final confirmation
+    totalStudents: 0,
+    pendingApprovals: 0,
+    paymentVerification: 0, 
+    currentTrainees: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const coll = collection(db, "applications");
-
-        // 1. Pending Approvals
-        const pendingSnap = await getCountFromServer(query(coll, where("status", "==", "pending")));
+        // 1. Total Student Users (role == "student")
+        const usersColl = collection(db, "users");
+        const studentSnap = await getCountFromServer(query(usersColl, where("role", "==", "student")));
         
-        // 2. Pending Payment (Status is 'approved' or 'accepted' but usually we check approved for payment pending)
-        // Adjust logic based on your exact workflow. usually 'approved' means waiting for payment.
-        const paymentSnap = await getCountFromServer(query(coll, where("status", "==", "approved")));
+        // 2. Applications Collection Queries
+        const appColl = collection(db, "applications");
 
-        // 3. Pending Confirmation (Status 'pending_confirmation')
-        const confirmSnap = await getCountFromServer(query(coll, where("status", "==", "pending_confirmation")));
+        // 3. Pending Approvals (Status 'pending')
+        const pendingSnap = await getCountFromServer(query(appColl, where("status", "==", "pending")));
+        
+        // 4. Payment Verification (Status is 'approved' AND paymentStatus is 'verification_pending')
+        // Note: Using a single query to count 'approved' applications, as most of them will be pending payment/verification.
+        // For simplicity and Firestore index considerations, we'll count all 'approved' and rely on the linked page to filter.
+        const paymentSnap = await getCountFromServer(query(appColl, where("status", "==", "approved")));
+
+        // 5. Current Trainees (Status 'in_progress')
+        const currentTraineesSnap = await getCountFromServer(query(appColl, where("status", "==", "in_progress")));
 
         setStats({
-          pending: pendingSnap.data().count,
-          approved: paymentSnap.data().count,
-          confirmation: confirmSnap.data().count,
+          totalStudents: studentSnap.data().count,
+          pendingApprovals: pendingSnap.data().count,
+          paymentVerification: paymentSnap.data().count, // Represents applications awaiting payment or verification
+          currentTrainees: currentTraineesSnap.data().count,
         });
       } catch (err) {
         console.error("Error loading stats:", err);
@@ -46,7 +54,7 @@ export default function SupervisorDashboardPage() {
   return (
     <div style={{ padding: 20 }}>
       <h2>Supervisor Dashboard</h2>
-      <p style={{ color: "#666", marginBottom: 20 }}>Overview of student applications.</p>
+      <p style={{ color: "#666", marginBottom: 20 }}>Overview of student applications and users.</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
         
@@ -56,28 +64,38 @@ export default function SupervisorDashboardPage() {
           style={{ ...styles.card, borderLeft: "5px solid #ff9800", cursor: "pointer" }}
         >
           <div style={styles.title}>Pending Approvals</div>
-          <div style={styles.count}>{stats.pending}</div>
-          <div style={styles.sub}>Students waiting for initial review</div>
+          <div style={styles.count}>{stats.pendingApprovals}</div>
+          <div style={styles.sub}>Applications awaiting initial review</div>
         </div>
 
-        {/* Card 2: Payment Verification */}
+        {/* Card 2: Payment Verification (Approved, waiting for action) */}
         <div 
           onClick={() => nav("/supervisor/applications/all")}
           style={{ ...styles.card, borderLeft: "5px solid #0d6efd", cursor: "pointer" }}
         >
           <div style={styles.title}>Payment Verification</div>
-          <div style={styles.count}>{stats.approved}</div>
-          <div style={styles.sub}>Students waiting for payment check</div>
+          <div style={styles.count}>{stats.paymentVerification}</div>
+          <div style={styles.sub}>Applications awaiting payment status check</div>
         </div>
 
-        {/* Card 3: Final Confirmation */}
+        {/* Card 3: Current Trainees */}
         <div 
-          onClick={() => nav("/supervisor/applications/completed")}
+          onClick={() => nav("/supervisor/current-trainees")}
           style={{ ...styles.card, borderLeft: "5px solid #198754", cursor: "pointer" }}
         >
-          <div style={styles.title}>Final Confirmation</div>
-          <div style={styles.count}>{stats.confirmation}</div>
-          <div style={styles.sub}>Waiting for appointment letter</div>
+          <div style={styles.title}>Current Trainees</div>
+          <div style={styles.count}>{stats.currentTrainees}</div>
+          <div style={styles.sub}>Students currently undergoing training</div>
+        </div>
+
+        {/* Card 4: Total Student Users */}
+        <div 
+          onClick={() => nav("/supervisor/users")}
+          style={{ ...styles.card, borderLeft: "5px solid #6c757d", cursor: "pointer" }}
+        >
+          <div style={styles.title}>Total Student Users</div>
+          <div style={styles.count}>{stats.totalStudents}</div>
+          <div style={styles.sub}>Total registered student accounts</div>
         </div>
 
       </div>
