@@ -1,21 +1,84 @@
+/* src/App.css */
+:root {
+  /* --- RCF BRAND PALETTE --- */
+  --primary-green: #006400;       
+  --primary-hover: #004d00;       
+  --white: #ffffff;
+  
+  --text-main: #2c3e50;
+  --text-muted: #596b7d;
+  
+  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  --radius: 8px;
+}
+
 /* Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+/* Main Page Background - Solid White for content pages */
+body { 
+  background-color: var(--white);
+  color: var(--text-main); 
+  line-height: 1.6; 
 }
 
-/* Whole app viewport */
-html,
-body,
-#root {
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
+/* Typography */
+h1, h2, h3, h4 { color: var(--primary-green); font-weight: 700; margin-bottom: 0.8rem; }
+a { color: var(--primary-green); text-decoration: none; font-weight: 600; }
+a:hover { text-decoration: underline; }
+
+/* --- BUTTONS --- */
+button { cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
+
+.btn-primary {
+  background-color: var(--primary-green) !important;
+  color: var(--white) !important;
+  border: 1px solid var(--primary-green) !important;
+  padding: 10px 24px;
+  border-radius: var(--radius);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+  box-shadow: 0 4px 8px rgba(0,100,0,0.2);
 }
 
-/* Default background for dashboards etc. */
-body {
-  background: #f5f5f5;
+/* Sidebar Sign Out Button */
+.btn-sidebar {
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.3); /* Slightly darker initial background */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  backdrop-filter: blur(4px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  font-weight: bold; /* Make text bolder */
+  transition: all 0.3s ease; /* Smooth transition */
+}
+
+/* Hover Effect: Turn Red with White Text */
+.btn-sidebar:hover {
+  background: #dc3545; /* Bootstrap Red / Danger Color */
+  color: #fff;
+  border-color: #dc3545;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4); /* Red glow effect */
+}
+
+/* --- FORMS --- */
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  background: #fff;
+  outline: none;
+}
+input:focus, select:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(0, 100, 0, 0.1);
 }

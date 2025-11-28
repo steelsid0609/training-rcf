@@ -4,28 +4,23 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
+import "../../src/App.css";
+import bgImage from "../assets/left-bg.jpg"; 
 
 const sidebarStyle = {
-  width: 260,
-  background: "#4a148c",
-  color: "#fff",
-  padding: "16px 12px",
+  width: 270,
+  backgroundImage: `url(${bgImage})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  color: "#fff", 
+  padding: "25px 15px",
   display: "flex",
   flexDirection: "column",
+  boxShadow: "4px 0 15px rgba(0,0,0,0.2)",
+  borderRight: "none",
+  height: "100vh",
   position: "sticky",
-  top: 0,
-  alignSelf: "flex-start",
-  minHeight: "100vh",
-};
-
-const navItemBase = {
-  display: "block",
-  padding: "8px 10px",
-  borderRadius: 6,
-  textDecoration: "none",
-  fontSize: 14,
-  color: "#fff",
-  marginBottom: 4,
+  top: 0
 };
 
 function NavItem({ to, label }) {
@@ -33,8 +28,17 @@ function NavItem({ to, label }) {
     <NavLink
       to={to}
       style={({ isActive }) => ({
-        ...navItemBase,
-        background: isActive ? "rgba(255,255,255,0.25)" : "transparent",
+        display: "block",
+        padding: "12px 15px",
+        borderRadius: "8px",
+        textDecoration: "none",
+        fontSize: "15px",
+        marginBottom: "6px",
+        fontWeight: isActive ? "700" : "500",
+        background: isActive ? "rgba(255, 255, 255, 0.2)" : "transparent",
+        color: "#fff",
+        borderLeft: isActive ? "4px solid #fff" : "4px solid transparent",
+        transition: "all 0.2s ease"
       })}
     >
       {label}
@@ -47,55 +51,46 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);      // 🔥 logout
-      navigate("/login");
-    } catch (err) {
-      console.error("Logout error", err);
-    }
+    try { await signOut(auth); navigate("/"); } catch (err) { console.error(err); }
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "#f5f5f5",
-      }}
-    >
+    <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
       <aside style={sidebarStyle}>
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontWeight: 700, fontSize: 18 }}>Admin Panel</div>
-          <div style={{ fontSize: 13, marginTop: 4 }}>
-            {user?.email || "Logged in"}
-          </div>
+        {/* Darker overlay for Admin */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.35)", zIndex: 0 }}></div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+            <div style={{ marginBottom: 30, textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.3)", paddingBottom: 20 }}>
+            <div style={{ fontSize: 22, fontWeight: "800", color: "#fff" }}>ADMIN</div>
+            <div style={{ fontSize: 12, color: "#ccc", marginTop: 5 }}>System Control</div>
+            </div>
+
+            <nav style={{ flex: 1, overflowY: "auto" }}>
+            <NavItem to="/admin/dashboard" label="Dashboard" />
+            
+            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ccc", textTransform: "uppercase" }}>Configuration</div>
+            <NavItem to="/admin/slots" label="Training Slots" />
+            <NavItem to="/admin/users" label="User Management" />
+            
+            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ccc", textTransform: "uppercase" }}>Data</div>
+            <NavItem to="/admin/applications/pending" label="Pending" />
+            <NavItem to="/admin/applications/completed" label="Completed" />
+            <NavItem to="/admin/applications" label="All Applications" />
+            </nav>
+
+            <div style={{ marginTop: "auto" }}>
+            <button onClick={handleLogout} className="btn-sidebar">
+                Sign Out
+            </button>
+            </div>
         </div>
-
-        <nav style={{ flex: 1 }}>
-          <NavItem to="/admin/dashboard" label="Dashboard" />
-          {/* You can add more admin links here later */}
-        </nav>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          style={{
-            marginTop: 16,
-            padding: "8px 12px",
-            borderRadius: 6,
-            border: "none",
-            cursor: "pointer",
-            background: "#c62828",
-            color: "#fff",
-            fontWeight: 600,
-          }}
-        >
-          Logout
-        </button>
       </aside>
 
-      <main style={{ flex: 1, padding: 24 }}>
-        <Outlet />
+      <main style={{ flex: 1, padding: "30px", overflowY: "auto", background: "#ffffff" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <Outlet />
+        </div>
       </main>
     </div>
   );

@@ -35,10 +35,14 @@ import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage";
 import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage";
 import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage";
 import FinishVerify from "./pages/FinishVerify";
-import AdminSlotsPage from "./pages/admin/AdminSlotsPage";
 
 // Admin pages
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminSlotsPage from "./pages/admin/AdminSlotsPage";
+import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
+import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage"; 
+import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage"; 
 // later you can add more admin pages and routes
 
 function App() {
@@ -128,6 +132,11 @@ function App() {
             <Route element={<AdminLayout />}>
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/slots" element={<AdminSlotsPage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/applications" element={<AdminApplicationsPage />} />
+              <Route path="/admin/applications/pending" element={<AdminPendingApplicationsPage />} />
+              <Route path="/admin/applications/completed" element={<AdminCompletedApplicationsPage />} />
+              <Route path="/admin/applications" element={<AdminApplicationsPage />} />
               {/* later add more admin routes here, reusing supervisor pages + extra */}
             </Route>
           </Route>
