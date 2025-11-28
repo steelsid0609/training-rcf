@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import "../../src/App.css";
-// Use the same bg image or a different one if you prefer
 import bgImage from "../assets/left-bg.jpg"; 
 
 const sidebarStyle = {
@@ -72,7 +71,10 @@ export default function SupervisorLayout() {
             <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Applications</div>
             <NavItem to="/supervisor/applications/pending" label="Pending Reviews" />
             <NavItem to="/supervisor/applications/all" label="Payment Verification" />
-            <NavItem to="/supervisor/applications/completed" label="Final Confirmation" />
+            
+            {/* Swapped Final Confirmation for Current Trainees */}
+            <NavItem to="/supervisor/current-trainees" label="Current Trainees" />
+            
             <NavItem to="/supervisor/applications/rejected" label="Rejected Archive" />
             
             <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Management</div>

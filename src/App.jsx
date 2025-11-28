@@ -29,12 +29,13 @@ import StudentPostingLetterPage from "./pages/student/StudentPostingLetterPage.j
 import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage";
 import SupervisorPendingApplicationsPage from "./pages/supervisor/SupervisorPendingApplicationsPage";
 import SupervisorAllApplicationsPage from "./pages/supervisor/SupervisorAllApplicationsPage";
-import SupervisorCompletedApplicationsPage from "./pages/supervisor/SupervisorCompletedApplicationsPage";
+// Removed: SupervisorCompletedApplicationsPage
 import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRejectedApplicationsPage";
 import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage";
 import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage";
 import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage";
 import FinishVerify from "./pages/FinishVerify";
+import SupervisorCurrentTraineesPage from "./pages/supervisor/SupervisorCurrentTraineesPage"; 
 
 // Admin pages
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -43,7 +44,6 @@ import AdminSlotsPage from "./pages/admin/AdminSlotsPage";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
 import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage"; 
 import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage"; 
-// later you can add more admin pages and routes
 
 function App() {
   return (
@@ -104,10 +104,13 @@ function App() {
                 path="/supervisor/applications/all"
                 element={<SupervisorAllApplicationsPage />}
               />
-              <Route
-                path="/supervisor/applications/completed"
-                element={<SupervisorCompletedApplicationsPage />}
+              
+              {/* REPLACED: Completed/Final Confirmation with Current Trainees */}
+              <Route 
+                path="/supervisor/current-trainees" 
+                element={<SupervisorCurrentTraineesPage />} 
               />
+              
               <Route
                 path="/supervisor/applications/rejected"
                 element={<SupervisorRejectedApplicationsPage />}
@@ -137,7 +140,6 @@ function App() {
               <Route path="/admin/applications/pending" element={<AdminPendingApplicationsPage />} />
               <Route path="/admin/applications/completed" element={<AdminCompletedApplicationsPage />} />
               <Route path="/admin/applications" element={<AdminApplicationsPage />} />
-              {/* later add more admin routes here, reusing supervisor pages + extra */}
             </Route>
           </Route>
         </Routes>

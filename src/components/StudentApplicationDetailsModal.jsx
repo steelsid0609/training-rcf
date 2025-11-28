@@ -104,13 +104,54 @@ export default function StudentApplicationDetailsModal({ app, onClose }) {
           <Section title="Documents">
             <div style={{ gridColumn: "span 2" }}>
               <div>
-                <strong>Cover Letter: </strong>
+                <strong>Recommendation Letter: </strong>
                 {app.coverLetterURL ? (
                   <a href={app.coverLetterURL} target="_blank" rel="noreferrer" style={linkStyle}>View File</a>
                 ) : <span style={{color: "#999"}}>Not Uploaded (Optional)</span>}
               </div>
             </div>
           </Section>
+
+          {/* 7. POSTING LETTERS (NEW SECTION) */}
+          {(app.postingLetters?.length > 0 || app.postingLetterURL) && (
+            <Section title="Issued Posting Letters">
+              <div style={{ gridColumn: "span 2" }}>
+                
+                {/* A. Multiple Letters (New Flow) */}
+                {app.postingLetters && app.postingLetters.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {app.postingLetters.map((letter, idx) => (
+                      <div key={idx} style={postingCardStyle}>
+                        <div style={{flex: 1}}>
+                          <div style={{fontWeight: "bold", fontSize: "14px", color: "#333"}}>
+                            {letter.period || "Posting"} 
+                            {letter.plant && <span style={{fontWeight: "normal", color: "#666"}}> • {letter.plant}</span>}
+                          </div>
+                          <div style={{fontSize: "11px", color: "#888"}}>
+                            Issued: {formatDate(letter.issuedAt)}
+                          </div>
+                        </div>
+                        <a href={letter.url} target="_blank" rel="noreferrer" style={downloadBtnStyle}>
+                          📥 Download
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* B. Legacy Single Letter (Fallback) */}
+                {(!app.postingLetters || app.postingLetters.length === 0) && app.postingLetterURL && (
+                   <div style={postingCardStyle}>
+                     <div style={{flex: 1, fontWeight: "bold", fontSize: "14px"}}>Final Posting Letter</div>
+                     <a href={app.postingLetterURL} target="_blank" rel="noreferrer" style={downloadBtnStyle}>
+                       📥 Download
+                     </a>
+                   </div>
+                )}
+              </div>
+            </Section>
+          )}
+
         </div>
 
         <div style={footerStyle}>
@@ -152,6 +193,15 @@ const btnStyle = {
 const linkStyle = {
   color: "#007bff", textDecoration: "underline", fontSize: "14px"
 };
+const postingCardStyle = {
+  background: "#f1f8e9", border: "1px solid #c5e1a5", borderRadius: "6px",
+  padding: "10px", display: "flex", alignItems: "center", justifyContent: "space-between"
+};
+const downloadBtnStyle = {
+  textDecoration: "none", background: "#fff", border: "1px solid #006400",
+  color: "#006400", fontSize: "12px", padding: "4px 8px", borderRadius: "4px", fontWeight: "bold"
+};
+
 function getStatusColor(status) {
   if (status === "approved") return "#28a745";
   if (status === "rejected") return "#dc3545";
