@@ -1,54 +1,70 @@
-// src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
-import { AuthProvider } from "./context/AuthContext";
-import ProtectedRoute from "./routes/ProtectedRoute";
+// --- TOAST NOTIFICATIONS CONFIGURATION ---
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Layouts
-import HomeLayout from "./layouts/HomeLayout";
-import AuthLayout from "./layouts/AuthLayout";
-import StudentLayout from "./layouts/StudentLayout";
-import SupervisorLayout from "./layouts/SupervisorLayout";
-import AdminLayout from "./layouts/AdminLayout";
+import HomeLayout from "./layouts/HomeLayout.jsx";
+import AuthLayout from "./layouts/AuthLayout.jsx";
+import StudentLayout from "./layouts/StudentLayout.jsx";
+import SupervisorLayout from "./layouts/SupervisorLayout.jsx";
+import AdminLayout from "./layouts/AdminLayout.jsx";
 
 // Public pages
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Home from "./pages/Home.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
 
 // Student pages
-import StudentDashboard from "./pages/StudentDashboard";
-import StudentBasicDetailsPage from "./pages/student/StudentBasicDetailsPage";
-import StudentChangePasswordPage from "./pages/student/StudentChangePasswordPage";
-import StudentCoverLetterPage from "./pages/student/StudentCoverLetterPage";
-import StudentApplicationsPage from "./pages/student/StudentApplicationsPage";
+import StudentDashboard from "./pages/StudentDashboard.jsx";
+import StudentBasicDetailsPage from "./pages/student/StudentBasicDetailsPage.jsx";
+import StudentChangePasswordPage from "./pages/student/StudentChangePasswordPage.jsx";
+import StudentCoverLetterPage from "./pages/student/StudentCoverLetterPage.jsx";
+import StudentApplicationsPage from "./pages/student/StudentApplicationsPage.jsx";
 import StudentPostingLetterPage from "./pages/student/StudentPostingLetterPage.jsx";
 
 // Supervisor pages
-import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage";
-import SupervisorPendingApplicationsPage from "./pages/supervisor/SupervisorPendingApplicationsPage";
-import SupervisorAllApplicationsPage from "./pages/supervisor/SupervisorAllApplicationsPage";
-// Removed: SupervisorCompletedApplicationsPage
-import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRejectedApplicationsPage";
-import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage";
-import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage";
-import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage";
-import FinishVerify from "./pages/FinishVerify";
-import SupervisorCurrentTraineesPage from "./pages/supervisor/SupervisorCurrentTraineesPage"; 
+import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage.jsx";
+import SupervisorPendingApplicationsPage from "./pages/supervisor/SupervisorPendingApplicationsPage.jsx";
+import SupervisorPaymentVerificationPage from "./pages/supervisor/SupervisorPaymentVerificationPage.jsx";
+import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRejectedApplicationsPage.jsx";
+import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage.jsx";
+import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage.jsx";
+import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage.jsx";
+import FinishVerify from "./pages/FinishVerify.jsx";
+import SupervisorCurrentTraineesPage from "./pages/supervisor/SupervisorCurrentTraineesPage.jsx";
+import SupervisorMasterApplicationsPage from "./pages/supervisor/SupervisorMasterApplicationsPage.jsx";
 
 // Admin pages
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import AdminUsersPage from "./pages/admin/AdminUsersPage";
-import AdminSlotsPage from "./pages/admin/AdminSlotsPage";
-import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
-import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage"; 
-import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage"; 
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
+import AdminUsersPage from "./pages/admin/AdminUsersPage.jsx";
+import AdminSlotsPage from "./pages/admin/AdminSlotsPage.jsx";
+import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage.jsx";
+import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage.jsx";
+import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage.jsx";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        {/* Global Toast Container for Notifications */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+
         <Routes>
           {/* PUBLIC / HOME */}
           <Route element={<HomeLayout />}>
@@ -66,67 +82,27 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
             <Route element={<StudentLayout />}>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route
-                path="/student/basic-details"
-                element={<StudentBasicDetailsPage />}
-              />
-              <Route
-                path="/student/change-password"
-                element={<StudentChangePasswordPage />}
-              />
-              <Route
-                path="/student/cover-letter"
-                element={<StudentCoverLetterPage />}
-              />
-              <Route
-                path="/student/applications"
-                element={<StudentApplicationsPage />}
-              />
-              <Route
-                path="/student/posting-letter"
-                element={<StudentPostingLetterPage />}
-              />
+              <Route path="/student/basic-details" element={<StudentBasicDetailsPage />} />
+              <Route path="/student/change-password" element={<StudentChangePasswordPage />} />
+              <Route path="/student/cover-letter" element={<StudentCoverLetterPage />} />
+              <Route path="/student/applications" element={<StudentApplicationsPage />} />
+              <Route path="/student/posting-letter" element={<StudentPostingLetterPage />} />
             </Route>
           </Route>
 
           {/* SUPERVISOR DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["supervisor"]} />}>
             <Route element={<SupervisorLayout />}>
-              <Route
-                path="/supervisor/dashboard"
-                element={<SupervisorDashboardPage />}
-              />
-              <Route
-                path="/supervisor/applications/pending"
-                element={<SupervisorPendingApplicationsPage />}
-              />
-              <Route
-                path="/supervisor/applications/all"
-                element={<SupervisorAllApplicationsPage />}
-              />
-              
-              {/* REPLACED: Completed/Final Confirmation with Current Trainees */}
-              <Route 
-                path="/supervisor/current-trainees" 
-                element={<SupervisorCurrentTraineesPage />} 
-              />
-              
-              <Route
-                path="/supervisor/applications/rejected"
-                element={<SupervisorRejectedApplicationsPage />}
-              />
-              <Route
-                path="/supervisor/users"
-                element={<SupervisorUsersPage />}
-              />
-              <Route
-                path="/supervisor/colleges/temp"
-                element={<SupervisorCollegesTempPage />}
-              />
-              <Route
-                path="/supervisor/colleges/master"
-                element={<SupervisorCollegesMasterPage />}
-              />
+              <Route path="/supervisor/dashboard" element={<SupervisorDashboardPage />} />
+              <Route path="/supervisor/applications/pending" element={<SupervisorPendingApplicationsPage />} />
+              <Route path="/supervisor/applications/all" element={<SupervisorPaymentVerificationPage />} />
+              <Route path="/supervisor/current-trainees" element={<SupervisorCurrentTraineesPage />} />
+              <Route path="/supervisor/applications/rejected" element={<SupervisorRejectedApplicationsPage />} />
+              <Route path="/supervisor/users" element={<SupervisorUsersPage />} />
+              <Route path="/supervisor/colleges/temp" element={<SupervisorCollegesTempPage />} />
+              <Route path="/supervisor/colleges/master" element={<SupervisorCollegesMasterPage />} />
+              {/* NEW MASTER LIST ROUTE */}
+              <Route path="/supervisor/applications/master" element={<SupervisorMasterApplicationsPage />} />
             </Route>
           </Route>
 
@@ -139,7 +115,6 @@ function App() {
               <Route path="/admin/applications" element={<AdminApplicationsPage />} />
               <Route path="/admin/applications/pending" element={<AdminPendingApplicationsPage />} />
               <Route path="/admin/applications/completed" element={<AdminCompletedApplicationsPage />} />
-              <Route path="/admin/applications" element={<AdminApplicationsPage />} />
             </Route>
           </Route>
         </Routes>

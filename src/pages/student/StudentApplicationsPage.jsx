@@ -1,13 +1,12 @@
-// src/pages/student/StudentApplicationsPage.jsx
 import React, { useEffect, useState } from "react";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import { useAuth } from "../../context/AuthContext";
+import { collection, query, where, onSnapshot, doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase.js"; // Fixed import
+import { useAuth } from "../../context/AuthContext.jsx"; // Fixed import
 
-import StudentApplicationList from "../../components/StudentApplicationList";
-import StudentUploadCoverLetterModal from "../../components/StudentUploadCoverLetterModal";
-import StudentUpdatePaymentModal from "../../components/StudentUpdatePaymentModal"; 
-import StudentApplyForm from "../../components/StudentApplyForm";
+import StudentApplicationList from "../../components/StudentApplicationList.jsx";
+import StudentUploadCoverLetterModal from "../../components/StudentUploadCoverLetterModal.jsx";
+import StudentUpdatePaymentModal from "../../components/StudentUpdatePaymentModal.jsx"; 
+import StudentApplyForm from "../../components/StudentApplyForm.jsx";
 
 export default function StudentApplicationsPage() {
   const { user } = useAuth();
@@ -19,37 +18,36 @@ export default function StudentApplicationsPage() {
   
   // --- MODAL STATES ---
   const [uploadModalApp, setUploadModalApp] = useState(null);
-  const [paymentModalApp, setPaymentModalApp] = useState(null); // Must be defined!
+  const [paymentModalApp, setPaymentModalApp] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      loadData(user.uid);
-    }
-  }, [user]);
+    if (!user) return;
 
-  async function loadData(uid) {
-    setLoading(true);
-    try {
-      const pSnap = await getDoc(doc(db, "users", uid));
-      setProfile(pSnap.exists() ? pSnap.data() : null);
+    // 1. Fetch Profile (Once is usually enough, but real-time is safer)
+    getDoc(doc(db, "users", user.uid)).then(snap => {
+      setProfile(snap.exists() ? snap.data() : null);
+    });
 
-      const q = query(collection(db, "applications"), where("createdBy", "==", uid));
-      const snap = await getDocs(q);
+    // 2. Real-time Listen to Applications
+    const q = query(collection(db, "applications"), where("createdBy", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       
       list.sort((a, b) => {
          const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
          const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-         return tB - tA;
+         return tB - tA; // Newest first
       });
 
       setApplications(list);
-    } catch (err) {
-      console.error(err);
-    } finally {
       setLoading(false);
-    }
-  }
+    }, (error) => {
+      console.error("Error listening to applications:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   if (loading) return <div style={{padding: 20}}>Loading...</div>;
 
@@ -84,7 +82,7 @@ export default function StudentApplicationsPage() {
           user={user}
           profile={profile}
           setShowApplyForm={setShowApplyForm}
-          reload={loadData}
+          // Reload is handled automatically by onSnapshot now
         />
       ) : (
         <>
@@ -94,7 +92,7 @@ export default function StudentApplicationsPage() {
             <StudentApplicationList 
               applications={applications} 
               setUploadModalApp={setUploadModalApp}
-              setPaymentModalApp={setPaymentModalApp} // <--- CRITICAL: Pass the function
+              setPaymentModalApp={setPaymentModalApp} 
             />
           )}
         </>
@@ -106,10 +104,7 @@ export default function StudentApplicationsPage() {
           app={uploadModalApp}
           user={user}
           onClose={() => setUploadModalApp(null)}
-          onComplete={() => {
-            setUploadModalApp(null);
-            loadData(user.uid);
-          }}
+          onComplete={() => setUploadModalApp(null)}
         />
       )}
 
@@ -118,10 +113,7 @@ export default function StudentApplicationsPage() {
           app={paymentModalApp}
           user={user}
           onClose={() => setPaymentModalApp(null)}
-          onComplete={() => {
-            setPaymentModalApp(null);
-            loadData(user.uid);
-          }}
+          onComplete={() => setPaymentModalApp(null)}
         />
       )}
     </div>
@@ -129,21 +121,6 @@ export default function StudentApplicationsPage() {
 }
 
 const styles = {
-  applyBtn: {
-    padding: "10px 20px",
-    background: "#006400",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    fontSize: "15px"
-  },
-  warningBox: {
-    padding: "10px 15px",
-    background: "#fff3cd",
-    border: "1px solid #ffeeba",
-    color: "#856404",
-    borderRadius: "6px"
-  }
+  applyBtn: { padding: "10px 20px", background: "#006400", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "15px" },
+  warningBox: { padding: "10px 15px", background: "#fff3cd", border: "1px solid #ffeeba", color: "#856404", borderRadius: "6px" }
 };

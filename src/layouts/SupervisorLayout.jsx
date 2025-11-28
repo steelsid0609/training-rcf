@@ -1,9 +1,8 @@
-// src/layouts/SupervisorLayout.jsx
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext.jsx";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../firebase.js";
 import "../../src/App.css";
 import bgImage from "../assets/left-bg.jpg"; 
 
@@ -57,7 +56,6 @@ export default function SupervisorLayout() {
   return (
     <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
       <aside style={sidebarStyle}>
-         {/* Overlay for readability */}
          <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.35)", zIndex: 0 }}></div>
          
          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
@@ -68,15 +66,15 @@ export default function SupervisorLayout() {
             <nav style={{ flex: 1, overflowY: "auto" }}>
             <NavItem to="/supervisor/dashboard" label="Dashboard" />
             
-            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Applications</div>
+            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Workflow</div>
             <NavItem to="/supervisor/applications/pending" label="Pending Reviews" />
             <NavItem to="/supervisor/applications/all" label="Payment Verification" />
-            
-            {/* Swapped Final Confirmation for Current Trainees */}
             <NavItem to="/supervisor/current-trainees" label="Current Trainees" />
-            
             <NavItem to="/supervisor/applications/rejected" label="Rejected Archive" />
             
+            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Reports</div>
+            <NavItem to="/supervisor/applications/master" label="All Applications" />
+
             <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ddd", textTransform: "uppercase" }}>Management</div>
             <NavItem to="/supervisor/users" label="Student Users" />
             <NavItem to="/supervisor/colleges/temp" label="College Requests" />
