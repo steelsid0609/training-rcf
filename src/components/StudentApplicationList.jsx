@@ -1,3 +1,4 @@
+// src/components/StudentApplicationList.jsx
 import React, { useState } from "react";
 import StudentApplicationDetailsModal from "./StudentApplicationDetailsModal"; 
 
@@ -10,6 +11,15 @@ export default function StudentApplicationList({
 
   if (!applications || applications.length === 0) {
     return <div>No applications found.</div>;
+  }
+  
+  // Helper to get the correct dates
+  const getDates = (app) => {
+      // Prioritize actual dates if available
+      const start = app.actualStartDate || app.preferredStartDate || "-";
+      const end = app.actualEndDate || app.preferredEndDate || "-";
+      // If approved, use the final/actual dates. If pending, show preferred.
+      return { start, end };
   }
 
   return (
@@ -24,6 +34,8 @@ export default function StudentApplicationList({
 
           // Show Payment Button if Approved AND (Payment Pending OR Rejected)
           const showPayBtn = status === "approved" && (payStatus === "pending" || payStatus === "rejected");
+          
+          const { start, end } = getDates(app); // Use helper
 
           return (
             <div key={app.id} style={cardStyle}>
@@ -38,9 +50,12 @@ export default function StudentApplicationList({
                 </div>
               </div>
 
-              {/* Summary */}
+              {/* Summary (UPDATED TO USE ACTUAL/PREFERRED DATES) */}
               <div style={{ marginTop: 15, color: "#444", fontSize: 14, lineHeight: "1.6" }}>
-                <div><strong>Dates:</strong> {app.preferredStartDate} to {app.preferredEndDate}</div>
+                <div>
+                  <strong>Dates:</strong> {start} to {end}
+                  {app.actualStartDate && <span style={{color: '#006400', fontWeight: 'bold'}}> (Final)</span>}
+                </div>
                 <div><strong>College:</strong> {app.collegeName}</div>
                 {app.paymentStatus && app.paymentStatus !== "pending" && (
                    <div style={{marginTop: 5}}>

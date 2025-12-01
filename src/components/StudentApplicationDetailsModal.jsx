@@ -1,3 +1,4 @@
+// src/components/StudentApplicationDetailsModal.jsx
 import React from "react";
 
 export default function StudentApplicationDetailsModal({ app, onClose }) {
@@ -72,18 +73,26 @@ export default function StudentApplicationDetailsModal({ app, onClose }) {
             ) : null}
           </Section>
 
-          {/* 4. INTERNSHIP DETAILS */}
-          <Section title="Training Details">
-            <Field label="Type" value={app.internshipType} />
-            <Field label="Confirmation" value={app.receivedConfirmation ? "Yes" : "No"} />
-            {app.confirmationNumber && <Field label="Conf. Number" value={app.confirmationNumber} />}
+          {/* 4. INTERNSHIP DATES (MODIFIED SECTION) */}
+          <Section title="Internship Dates">
+            <div style={{ gridColumn: "span 2", marginBottom: 10, padding: 8, border: "1px dashed #ccc", borderRadius: 4 }}>
+                <strong style={{color: "#006400"}}>Preferred Dates:</strong> {formatDate(app.preferredStartDate)} to {formatDate(app.preferredEndDate)}
+            </div>
             
-            <Field label="Start Date" value={formatDate(app.preferredStartDate)} />
-            <Field label="End Date" value={formatDate(app.preferredEndDate)} />
+            {/* NEW ACTUAL DATES */}
+            <div style={{ gridColumn: "span 2", marginBottom: 10, padding: 8, border: "1px solid #198754", background: "#d4edda", borderRadius: 4 }}>
+                <strong style={{color: "#155724"}}>Actual/Final Dates:</strong> 
+                {app.actualStartDate ? `${formatDate(app.actualStartDate)} to ${formatDate(app.actualEndDate)}` : "Awaiting Supervisor Approval"}
+            </div>
             
             {app.durationDetails && (
               <Field label="Duration" value={`${app.durationDetails.value} ${app.durationDetails.type}`} fullWidth />
             )}
+            
+            <Field label="Type" value={app.internshipType} />
+            <Field label="Confirmation" value={app.receivedConfirmation ? "Yes" : "No"} />
+            {app.confirmationNumber && <Field label="Conf. Number" value={app.confirmationNumber} />}
+            
           </Section>
 
           {/* 5. PAYMENT DETAILS */}
@@ -112,12 +121,11 @@ export default function StudentApplicationDetailsModal({ app, onClose }) {
             </div>
           </Section>
 
-          {/* 7. POSTING LETTERS (NEW SECTION) */}
+          {/* 7. POSTING LETTERS */}
           {(app.postingLetters?.length > 0 || app.postingLetterURL) && (
             <Section title="Issued Posting Letters">
               <div style={{ gridColumn: "span 2" }}>
                 
-                {/* A. Multiple Letters (New Flow) */}
                 {app.postingLetters && app.postingLetters.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {app.postingLetters.map((letter, idx) => (
@@ -139,7 +147,6 @@ export default function StudentApplicationDetailsModal({ app, onClose }) {
                   </div>
                 )}
 
-                {/* B. Legacy Single Letter (Fallback) */}
                 {(!app.postingLetters || app.postingLetters.length === 0) && app.postingLetterURL && (
                    <div style={postingCardStyle}>
                      <div style={{flex: 1, fontWeight: "bold", fontSize: "14px"}}>Final Posting Letter</div>

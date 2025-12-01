@@ -1,11 +1,15 @@
+// src/pages/supervisor/SupervisorPendingApplicationsPage.jsx
 import React, { useEffect, useState } from "react";
-import { db } from "../../firebase.js"; // Fixed import
+import { db } from "../../firebase.js";
 import { 
-  collection, query, where, doc, updateDoc, serverTimestamp, onSnapshot 
+  collection, query, where, doc, updateDoc, serverTimestamp, onSnapshot, increment 
 } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { useAuth } from "../../context/AuthContext.jsx"; // Fixed import
-import ApplicationsView from "../../components/admin/ApplicationsView.jsx"; // Fixed import
+import { useAuth } from "../../context/AuthContext.jsx";
+import ApplicationsView from "../../components/admin/ApplicationsView.jsx";
+// Import the new modal
+import ActualDatesConfirmationModal from "../../components/supervisor/ActualDatesConfirmationModal.jsx"; 
+
 
 export default function SupervisorPendingApplicationsPage() {
   const { user } = useAuth();
@@ -15,6 +19,9 @@ export default function SupervisorPendingApplicationsPage() {
   const [slotsMap, setSlotsMap] = useState({});
   const [slotCounts, setSlotCounts] = useState({});
   const [selectedSlot, setSelectedSlot] = useState("");
+  
+  // NEW: State for modal control - holds the app being finalized
+  const [appToFinalize, setAppToFinalize] = useState(null); 
   
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
@@ -36,27 +43,17 @@ export default function SupervisorPendingApplicationsPage() {
       toast.error("Error syncing pending applications");
     });
 
-    // 2. Listener for Approved Applications (for Slot Counts)
-    const approvedQuery = query(collection(db, "applications"), where("status", "==", "approved"));
-    const unsubApproved = onSnapshot(approvedQuery, (snap) => {
-      const counts = {};
-      snap.forEach(doc => {
-        const d = doc.data();
-        if (d.durationDetails && d.durationDetails.slotId) {
-          const sid = d.durationDetails.slotId;
-          counts[sid] = (counts[sid] || 0) + 1;
-        }
-      });
-      setSlotCounts(counts);
-    });
-
-    // 3. Listener for Training Slots
+    // 2. Listener for Training Slots (Reads applicationCount)
     const unsubSlots = onSnapshot(collection(db, "trainingSlots"), (snap) => {
       const sMap = {};
+      const counts = {}; 
       let allSlots = [];
+      
       snap.forEach(doc => {
         const d = doc.data();
         sMap[doc.id] = d.label;
+        // Read the persisted applicationCount
+        counts[doc.id] = d.applicationCount || 0; 
         allSlots.push({ id: doc.id, ...d });
       });
 
@@ -72,32 +69,63 @@ export default function SupervisorPendingApplicationsPage() {
         .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
       setSlotsMap(sMap);
+      setSlotCounts(counts); 
       setSlotsList([...pastSlots.reverse(), ...futureSlots]);
     });
 
     return () => {
       unsubPending();
-      unsubApproved();
       unsubSlots();
     };
   }, []);
 
-  async function handleApprove(app) {
-    if (!window.confirm(`Approve application for ${app.studentName}?`)) return;
+  // MODIFIED handleApprove: Accepts final form data from modal
+  async function handleApprove(app, finalFormData) {
+    const newSlotId = finalFormData.slotId;
+    // const oldSlotId = app.durationDetails?.slotId; // Not used in this logic step
+
     setWorking(true);
     try {
-      const ref = doc(db, "applications", app.id);
-      await updateDoc(ref, {
+      
+      const appRef = doc(db, "applications", app.id);
+      
+      // 1. Update Application Status, Actual Dates, and Slot ID
+      await updateDoc(appRef, {
         status: "approved",
         approvedBy: user.uid,
         approvedAt: serverTimestamp(),
+        // Store the FINAL dates as ACTUAL dates
+        actualStartDate: finalFormData.actualStartDate, // NEW FIELD
+        actualEndDate: finalFormData.actualEndDate,   // NEW FIELD
+        // The preferred dates remain unchanged (on the document)
+        
+        // Update the durationDetails object to reflect the new slotId
+        durationDetails: {
+            ...app.durationDetails,
+            slotId: newSlotId
+        },
       });
-      toast.success("Application Approved ✅");
+      
+      // 2. Update Slot Count (Only Increment the new slot)
+      if (newSlotId) {
+        const newSlotRef = doc(db, "trainingSlots", newSlotId);
+        await updateDoc(newSlotRef, {
+          // Increment the applicationCount field by 1
+          applicationCount: increment(1)
+        });
+      }
+      // Note: We do NOT decrement the old slot, as the old slot was just a "pending" application, 
+      // and we only track counts for "approved" applications.
+
+      
+      toast.success("Application Approved & Dates Finalized ✅");
+      
     } catch (err) {
       console.error(err);
-      toast.error("Failed to approve");
+      toast.error("Failed to approve: " + err.message);
     } finally {
       setWorking(false);
+      setAppToFinalize(null); // Close modal on completion/failure
     }
   }
 
@@ -121,6 +149,11 @@ export default function SupervisorPendingApplicationsPage() {
       setWorking(false);
     }
   }
+  
+  // Wrapper for ApplicationsView to open the modal
+  const openFinalizeModal = (app) => {
+      setAppToFinalize(app);
+  };
 
   // --- STYLES ---
   const styles = {
@@ -157,11 +190,23 @@ export default function SupervisorPendingApplicationsPage() {
       <ApplicationsView
         applications={applications}
         slotsMap={slotsMap} 
-        onApprove={handleApprove}
+        // Use the modal opener instead of the direct handleApprove
+        onApprove={openFinalizeModal}
         onReject={handleReject}
         working={working}
         styles={styles}
       />
+      
+      {/* --- RENDER MODAL --- */}
+      {appToFinalize && (
+          <ActualDatesConfirmationModal
+              app={appToFinalize}
+              slotsList={slotsList}
+              slotsMap={slotsMap}
+              onClose={() => setAppToFinalize(null)}
+              onApprove={handleApprove}
+          />
+      )}
     </div>
   );
 }
