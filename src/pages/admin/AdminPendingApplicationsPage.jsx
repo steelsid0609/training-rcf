@@ -1,128 +1,100 @@
-// src/pages/admin/AdminPendingApplicationsPage.jsx
 import React, { useEffect, useState } from "react";
 import { db } from "../../firebase";
-import { 
-  collection, query, where, getDocs, doc, updateDoc, serverTimestamp 
-} from "firebase/firestore";
-import { toast } from "react-toastify";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 import ApplicationsView from "../../components/admin/ApplicationsView";
+import ActualDatesConfirmationModal from "../../components/supervisor/ActualDatesConfirmationModal";
+import { useApplicationActions } from "../../hooks/useApplicationActions";
 
 export default function AdminPendingApplicationsPage() {
   const { user } = useAuth();
+  // Using the new shared logic hook
+  const { approveApplication, rejectApplication, working } = useApplicationActions(user);
+  
   const [applications, setApplications] = useState([]);
+  const [slotsList, setSlotsList] = useState([]);
   const [slotsMap, setSlotsMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [working, setWorking] = useState(false);
+  
+  // State to control the Approval Modal
+  const [appToApprove, setAppToApprove] = useState(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    setLoading(true);
-    try {
-      // 1. Fetch Pending Applications
-      const appQuery = query(
-        collection(db, "applications"),
-        where("status", "==", "pending") 
-      );
+    // 1. Fetch Pending Apps
+    const q = query(collection(db, "applications"), where("status", "==", "pending"));
+    const unsubApps = onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      // 2. Fetch Training Slots
-      const slotQuery = query(collection(db, "trainingSlots"));
-
-      const [appSnap, slotSnap] = await Promise.all([
-        getDocs(appQuery),
-        getDocs(slotQuery)
-      ]);
-
-      const apps = appSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      
-      // Sort: Newest First
-      apps.sort((a, b) => {
+      // Sort by newest
+      list.sort((a, b) => {
          const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
          const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
          return tB - tA;
       });
 
-      const sMap = {};
-      slotSnap.forEach(doc => {
-        sMap[doc.id] = doc.data().label;
-      });
-
-      setApplications(apps);
-      setSlotsMap(sMap);
-
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load data");
-    } finally {
+      setApplications(list);
       setLoading(false);
-    }
-  }
+    });
 
-  // --- ACTIONS ---
-
-  async function handleApprove(app) {
-    if (!window.confirm(`Approve application for ${app.studentName}?`)) return;
-    setWorking(true);
-    try {
-      const ref = doc(db, "applications", app.id);
-      await updateDoc(ref, {
-        status: "approved",
-        approvedBy: user.uid,
-        approvedAt: serverTimestamp(),
+    // 2. Fetch Slots (Needed for Modal drop-downs)
+    const unsubSlots = onSnapshot(collection(db, "trainingSlots"), (snap) => {
+      const list = [];
+      const map = {};
+      snap.forEach(d => {
+        const data = { id: d.id, ...d.data() };
+        list.push(data);
+        map[d.id] = data.label;
       });
-      toast.success("Application Approved");
-      setApplications((prev) => prev.filter((a) => a.id !== app.id));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to approve");
-    } finally {
-      setWorking(false);
-    }
-  }
+      setSlotsList(list);
+      setSlotsMap(map);
+    });
 
-  async function handleReject(app) {
-    const reason = prompt("Enter rejection reason:");
-    if (!reason) return;
-    setWorking(true);
-    try {
-      const ref = doc(db, "applications", app.id);
-      await updateDoc(ref, {
-        status: "rejected",
-        rejectedBy: user.uid,
-        rejectedAt: serverTimestamp(),
-        rejectionReason: reason
-      });
-      toast.info("Application Rejected");
-      setApplications((prev) => prev.filter((a) => a.id !== app.id));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to reject");
-    } finally {
-      setWorking(false);
-    }
-  }
+    return () => { unsubApps(); unsubSlots(); };
+  }, []);
 
-  const styles = {
-    card: { background: "#fff", padding: "20px", marginBottom: "16px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.08)" },
-    applyBtn: { padding: "8px 16px", border: "none", borderRadius: "4px", background: "#28a745", color: "#fff", cursor: "pointer", fontWeight: "600", fontSize: "14px" },
+  const handleApproveClick = (app) => {
+    setAppToApprove(app); // Opens the modal
+  };
+
+  const handleConfirmApprove = async (app, finalData) => {
+    // Call the hook logic
+    await approveApplication(app, finalData);
+    setAppToApprove(null); // Close modal
+  };
+
+  const handleRejectClick = (app) => {
+    const reason = prompt("Enter Rejection Reason:");
+    if(reason) rejectApplication(app.id, reason);
   };
 
   if (loading) return <div style={{ padding: 30 }}>Loading...</div>;
 
   return (
     <div style={{ padding: 30 }}>
-      <h2 style={{ marginBottom: 20, color: "#333" }}>Pending Applications</h2>
+      <h2 style={{ marginBottom: 20, color: "#333" }}>Pending Applications (Admin)</h2>
+      
       <ApplicationsView
         applications={applications}
         slotsMap={slotsMap}
-        onApprove={handleApprove}
-        onReject={handleReject}
+        onApprove={handleApproveClick} 
+        onReject={handleRejectClick}
         working={working}
-        styles={styles}
+        styles={{
+          card: { background: "#fff", padding: 20, marginBottom: 15, borderRadius: 8, boxShadow: "0 2px 5px rgba(0,0,0,0.1)" },
+          applyBtn: { padding: "8px 16px", borderRadius: 4, border: "none", cursor: "pointer", color: "#fff", background: "#006400", fontWeight: "600", fontSize: "14px" }
+        }}
       />
+
+      {/* Confirmation Modal - Shared with Supervisor logic */}
+      {appToApprove && (
+        <ActualDatesConfirmationModal
+          app={appToApprove}
+          slotsList={slotsList}
+          slotsMap={slotsMap}
+          onClose={() => setAppToApprove(null)}
+          onApprove={handleConfirmApprove}
+        />
+      )}
     </div>
   );
 }

@@ -73,9 +73,11 @@ export default function AdminLayout() {
             <NavItem to="/admin/slots" label="Training Slots" />
             <NavItem to="/admin/users" label="User Management" />
             
-            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ccc", textTransform: "uppercase" }}>Data</div>
-            <NavItem to="/admin/applications/pending" label="Pending" />
-            <NavItem to="/admin/applications/completed" label="Completed" />
+            <div style={{ margin: "15px 0 5px 15px", fontSize: "11px", color: "#ccc", textTransform: "uppercase" }}>Data & Workflow</div>
+            <NavItem to="/admin/applications/pending" label="Pending Approvals" />
+            <NavItem to="/admin/applications/payments" label="Payment Verification" />
+            <NavItem to="/admin/applications/trainees" label="Active Trainees" />
+            <NavItem to="/admin/applications/completed" label="Completed Archive" />
             <NavItem to="/admin/applications" label="All Applications" />
             </nav>
 

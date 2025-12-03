@@ -46,6 +46,9 @@ import AdminSlotsPage from "./pages/admin/AdminSlotsPage.jsx";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage.jsx";
 import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage.jsx";
 import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage.jsx";
+// NEW ADMIN PAGES
+import AdminPaymentPage from "./pages/admin/AdminPaymentPage.jsx";
+import AdminTraineesPage from "./pages/admin/AdminTraineesPage.jsx";
 
 function App() {
   return (
@@ -101,7 +104,6 @@ function App() {
               <Route path="/supervisor/users" element={<SupervisorUsersPage />} />
               <Route path="/supervisor/colleges/temp" element={<SupervisorCollegesTempPage />} />
               <Route path="/supervisor/colleges/master" element={<SupervisorCollegesMasterPage />} />
-              {/* NEW MASTER LIST ROUTE */}
               <Route path="/supervisor/applications/master" element={<SupervisorMasterApplicationsPage />} />
             </Route>
           </Route>
@@ -114,6 +116,8 @@ function App() {
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin/applications" element={<AdminApplicationsPage />} />
               <Route path="/admin/applications/pending" element={<AdminPendingApplicationsPage />} />
+              <Route path="/admin/applications/payments" element={<AdminPaymentPage />} />
+              <Route path="/admin/applications/trainees" element={<AdminTraineesPage />} />
               <Route path="/admin/applications/completed" element={<AdminCompletedApplicationsPage />} />
             </Route>
           </Route>
