@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "../../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
-import ApplicationsView from "../../components/admin/ApplicationsView";
+import ApplicationsView from "../../components/common/ApplicationListView";
 import ActualDatesConfirmationModal from "../../components/supervisor/ActualDatesConfirmationModal";
 import { useApplicationActions } from "../../hooks/useApplicationActions";
 

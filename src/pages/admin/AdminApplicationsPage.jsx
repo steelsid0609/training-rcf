@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase.js"; // Ensure this path is correct based on folder structure
-import AdminApplicationDetailsModal from "../../components/admin/AdminApplicationDetailsModal.jsx";
+import AdminApplicationDetailsModal from "../../components/common/ApplicationDataModal.jsx";
 import ExcelExportButton from "../../components/ExcelExportButton.jsx";
 
 export default function AdminApplicationsPage() {

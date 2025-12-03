@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
-import TraineeActionCard from "../../components/common/TraineeActionCard";
+import TraineeActionCard from "../../components/supervisor/TraineeActionCard";
 
 export default function AdminTraineesPage() {
   const { user } = useAuth();

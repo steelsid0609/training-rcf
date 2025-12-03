@@ -24,14 +24,14 @@ import NotFound from "./pages/NotFound.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import StudentBasicDetailsPage from "./pages/student/StudentBasicDetailsPage.jsx";
 import StudentChangePasswordPage from "./pages/student/StudentChangePasswordPage.jsx";
-import StudentCoverLetterPage from "./pages/student/StudentCoverLetterPage.jsx";
+import StudentCoverLetterPage from "./pages/student/DocumentUploadPage.jsx";
 import StudentApplicationsPage from "./pages/student/StudentApplicationsPage.jsx";
-import StudentPostingLetterPage from "./pages/student/StudentPostingLetterPage.jsx";
+import StudentPostingLetterPage from "./pages/student/PostingLetterPage.jsx";
 
 // Supervisor pages
 import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage.jsx";
 import SupervisorPendingApplicationsPage from "./pages/supervisor/SupervisorPendingApplicationsPage.jsx";
-import SupervisorPaymentVerificationPage from "./pages/supervisor/SupervisorPaymentVerificationPage.jsx";
+import SupervisorPaymentVerificationPage from "./pages/supervisor/PaymentVerificationPage.jsx";
 import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRejectedApplicationsPage.jsx";
 import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage.jsx";
 import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage.jsx";

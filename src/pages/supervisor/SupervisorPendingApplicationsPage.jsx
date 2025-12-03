@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext.jsx";
-import ApplicationsView from "../../components/admin/ApplicationsView.jsx";
+import ApplicationsView from "../../components/common/ApplicationListView.jsx";
 // Import the new modal
 import ActualDatesConfirmationModal from "../../components/supervisor/ActualDatesConfirmationModal.jsx"; 
 

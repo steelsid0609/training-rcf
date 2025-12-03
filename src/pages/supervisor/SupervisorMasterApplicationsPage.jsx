@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase.js";
-import AdminApplicationDetailsModal from "../../components/admin/AdminApplicationDetailsModal.jsx";
+import AdminApplicationDetailsModal from "../../components/common/ApplicationDataModal.jsx";
 import ExcelExportButton from "../../components/ExcelExportButton.jsx";
 import ApplicationsTable from "../../components/common/ApplicationsTable.jsx"; // Use reusable table
 import { UI_STYLES } from "../../utils/constants.js";

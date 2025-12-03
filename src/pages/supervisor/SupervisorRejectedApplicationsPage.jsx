@@ -7,7 +7,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
-import ApplicationsView from "../../components/admin/ApplicationsView"; 
+import ApplicationsView from "../../components/common/ApplicationListView"; 
 
 export default function SupervisorRejectedApplicationsPage() {
   const [applications, setApplications] = useState([]);
