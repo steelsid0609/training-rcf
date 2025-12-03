@@ -1,8 +1,12 @@
+// src/pages/admin/AdminApplicationsPage.jsx - CLEANED
+
 import React, { useEffect, useState } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebase.js"; // Ensure this path is correct based on folder structure
-import AdminApplicationDetailsModal from "../../components/common/ApplicationDataModal.jsx";
+import { db } from "../../firebase.js"; 
+// Import reusable components
+import ApplicationDataModal from "../../components/common/ApplicationDataModal.jsx";
 import ExcelExportButton from "../../components/ExcelExportButton.jsx";
+import ApplicationsTable from "../../components/common/ApplicationsTable.jsx"; // NEW: Reusable Table
 
 export default function AdminApplicationsPage() {
   const [apps, setApps] = useState([]);
@@ -93,55 +97,16 @@ export default function AdminApplicationsPage() {
         />
       </div>
 
-      {/* Data Table */}
-      <div style={styles.tableContainer}>
-        <table style={styles.table}>
-          <thead>
-            <tr style={styles.trHead}>
-              <th style={styles.th}>Student</th>
-              <th style={styles.th}>Type</th>
-              <th style={styles.th}>College</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Applied On</th>
-              <th style={styles.th}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredApps.length === 0 ? (
-              <tr><td colSpan="6" style={{ padding: 30, textAlign: "center", color: "#888" }}>No records match your filters.</td></tr>
-            ) : (
-              filteredApps.map(app => (
-                <tr key={app.id} style={styles.tr}>
-                  <td style={styles.td}>
-                    <div style={{fontWeight: "bold"}}>{app.studentName}</div>
-                    <div style={{ fontSize: 12, color: "#666" }}>{app.email}</div>
-                  </td>
-                  <td style={styles.td}>{app.internshipType}</td>
-                  <td style={styles.td}>{app.collegeName || "-"}</td>
-                  <td style={styles.td}>
-                    <span style={getStatusBadge(app.status)}>{app.status?.toUpperCase()}</span>
-                  </td>
-                  <td style={styles.td}>
-                    {app.createdAt?.toDate ? app.createdAt.toDate().toLocaleDateString() : "-"}
-                  </td>
-                  <td style={styles.td}>
-                    <button 
-                      onClick={() => setSelectedApp(app)}
-                      style={styles.viewBtn}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Data Table: Using reusable ApplicationsTable */}
+      <ApplicationsTable
+        applications={filteredApps}
+        onViewDetails={setSelectedApp} // Pass the handler
+      />
+
 
       {/* Modal */}
       {selectedApp && (
-        <AdminApplicationDetailsModal 
+        <ApplicationDataModal 
           app={selectedApp} 
           onClose={() => setSelectedApp(null)} 
         />
@@ -150,24 +115,9 @@ export default function AdminApplicationsPage() {
   );
 }
 
-// --- Helpers ---
-const getStatusBadge = (status) => {
-  const s = (status || "pending").toLowerCase();
-  let bg = "#eee", col = "#333";
-  
-  switch(s) {
-    case "approved": bg = "#d4edda"; col = "#155724"; break;
-    case "rejected": bg = "#f8d7da"; col = "#721c24"; break;
-    case "completed": bg = "#cce5ff"; col = "#004085"; break;
-    case "pending": bg = "#fff3cd"; col = "#856404"; break;
-    case "in_progress": bg = "#e0cffc"; col = "#5e35b1"; break;
-    case "pending_confirmation": bg = "#d1ecf1"; col = "#0c5460"; break;
-    default: bg = "#e2e3e5"; col = "#383d41";
-  }
+// NOTE: Removed local getStatusBadge helper function.
 
-  return { background: bg, color: col, padding: "4px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "bold", whiteSpace: "nowrap" };
-};
-
+// Keeping only necessary styles (controls)
 const styles = {
   controls: {
     display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap"
@@ -181,15 +131,5 @@ const styles = {
   exportBtn: {
     padding: "10px 20px", background: "#217346", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px"
   },
-  tableContainer: {
-    background: "#fff", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", overflowX: "auto"
-  },
-  table: { width: "100%", borderCollapse: "collapse", minWidth: "800px" },
-  trHead: { background: "#f8f9fa", borderBottom: "2px solid #eee" },
-  th: { padding: "12px 15px", textAlign: "left", fontSize: "14px", color: "#555", fontWeight: "600" },
-  tr: { borderBottom: "1px solid #eee" },
-  td: { padding: "12px 15px", fontSize: "14px", color: "#333", verticalAlign: "middle" },
-  viewBtn: {
-    padding: "6px 14px", background: "#007bff", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "13px"
-  }
+  // Removed table-related styles as they are now in ApplicationsTable.jsx
 };
