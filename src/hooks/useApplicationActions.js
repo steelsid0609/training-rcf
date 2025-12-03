@@ -1,34 +1,13 @@
+// src/hooks/useApplicationActions.js
 import { useState } from "react";
 import { db } from "../firebase";
 import { doc, updateDoc, serverTimestamp, arrayUnion, increment, Timestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { generateApprovalLetterPDF } from "../utils/pdfGenerator"; // Import generator
-
-// Cloudinary Config
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+import { generateApprovalLetterPDF } from "../utils/pdfGenerator";
+import { uploadFileToCloudinary } from "../utils/helpers"; // Use centralized helper
 
 export function useApplicationActions(user) {
   const [working, setWorking] = useState(false);
-
-  // Helper to upload file/blob to Cloudinary
-  const uploadFile = async (file, publicId) => {
-    const formData = new FormData();
-    // Check if it's a PDF Blob (generated) or a File (uploaded)
-    if (file instanceof Blob) {
-      formData.append("file", file, "document.pdf");
-    } else {
-      formData.append("file", file);
-    }
-    formData.append("upload_preset", UPLOAD_PRESET);
-    if(publicId) formData.append("public_id", publicId);
-
-    const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error?.message || "Upload failed");
-    return json.secure_url;
-  };
 
   // --- 1. APPROVE (Pending -> Approved) ---
   const approveApplication = async (app, finalFormData) => {
@@ -37,14 +16,13 @@ export function useApplicationActions(user) {
 
     try {
       // A. Generate Approval Letter PDF
-      // We use finalFormData because it contains the confirmed Actual Dates
       const pdfBlob = generateApprovalLetterPDF(app, {
         actualStartDate: finalFormData.actualStartDate,
         actualEndDate: finalFormData.actualEndDate
       });
 
-      // B. Upload Letter to Cloudinary
-      const letterUrl = await uploadFile(pdfBlob, `approval_letter_${app.id}_${Date.now()}`);
+      // B. Upload Letter to Cloudinary (Use centralized helper)
+      const letterUrl = await uploadFileToCloudinary(pdfBlob, `approval_letter_${app.id}_${Date.now()}`);
 
       // C. Update Firestore
       const appRef = doc(db, "applications", app.id);
@@ -58,7 +36,7 @@ export function useApplicationActions(user) {
         actualStartDate: finalFormData.actualStartDate,
         actualEndDate: finalFormData.actualEndDate,
         
-        // Save Slot
+        // Update the durationDetails object to reflect the final slotId
         durationDetails: { 
           ...app.durationDetails, 
           slotId: finalFormData.slotId 
@@ -83,7 +61,7 @@ export function useApplicationActions(user) {
     }
   };
 
-  // --- 2. REJECT ---
+  // --- 2. REJECT (Pending -> Rejected) ---
   const rejectApplication = async (appId, reason) => {
     if (!reason) return;
     setWorking(true);
@@ -102,7 +80,7 @@ export function useApplicationActions(user) {
     }
   };
 
-  // --- 3. VERIFY PAYMENT ---
+  // --- 3. VERIFY PAYMENT (Approved -> Pending Confirmation) ---
   const verifyPayment = async (appId) => {
     setWorking(true);
     try {
@@ -121,7 +99,7 @@ export function useApplicationActions(user) {
     }
   };
 
-  // --- 4. REJECT PAYMENT ---
+  // --- 4. REJECT PAYMENT (Approved (Verification Pending) -> Approved (Rejected)) ---
   const rejectPayment = async (appId, reason) => {
     setWorking(true);
     try {
@@ -138,13 +116,13 @@ export function useApplicationActions(user) {
     }
   };
 
-  // --- 5. ISSUE POSTING LETTER ---
+  // --- 5. ISSUE POSTING LETTER (Pending Confirmation/In Progress -> In Progress) ---
   const issuePostingLetter = async (app, period, plant, fileOrBlob) => {
     setWorking(true);
     const toastId = toast.loading("Issuing Posting Letter...");
     try {
-      // Upload
-      const url = await uploadFile(fileOrBlob, `posting_${app.id}_${Date.now()}`);
+      // Upload (Use centralized helper)
+      const url = await uploadFileToCloudinary(fileOrBlob, `posting_${app.id}_${Date.now()}`);
 
       const newLetter = {
         period,
@@ -160,6 +138,7 @@ export function useApplicationActions(user) {
         updatedAt: serverTimestamp()
       };
 
+      // If it was PENDING_CONFIRMATION, now it starts.
       if (app.status === "pending_confirmation") {
         updates.status = "in_progress";
         updates.internshipStartedAt = serverTimestamp();
@@ -176,7 +155,7 @@ export function useApplicationActions(user) {
     }
   };
 
-  // --- 6. MARK COMPLETED ---
+  // --- 6. MARK COMPLETED (In Progress -> Completed) ---
   const markCompleted = async (appId) => {
     setWorking(true);
     try {

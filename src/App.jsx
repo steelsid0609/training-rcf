@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+import AppLayout from "./layouts/AppLayout.jsx"; // NEW UNIVERSAL LAYOUT
 
 // --- TOAST NOTIFICATIONS CONFIGURATION ---
 import { ToastContainer } from "react-toastify";
@@ -10,14 +11,14 @@ import "react-toastify/dist/ReactToastify.css";
 // Layouts
 import HomeLayout from "./layouts/HomeLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
-import StudentLayout from "./layouts/StudentLayout.jsx";
-import SupervisorLayout from "./layouts/SupervisorLayout.jsx";
-import AdminLayout from "./layouts/AdminLayout.jsx";
 
 // Public pages
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import FinishVerify from "./pages/FinishVerify.jsx";
+import Unauthorized from "./pages/Unauthorized.jsx";
+import NotFound from "./pages/NotFound.jsx";
 
 // Student pages
 import StudentDashboard from "./pages/StudentDashboard.jsx";
@@ -35,7 +36,6 @@ import SupervisorRejectedApplicationsPage from "./pages/supervisor/SupervisorRej
 import SupervisorUsersPage from "./pages/supervisor/SupervisorUsersPage.jsx";
 import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTempPage.jsx";
 import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage.jsx";
-import FinishVerify from "./pages/FinishVerify.jsx";
 import SupervisorCurrentTraineesPage from "./pages/supervisor/SupervisorCurrentTraineesPage.jsx";
 import SupervisorMasterApplicationsPage from "./pages/supervisor/SupervisorMasterApplicationsPage.jsx";
 
@@ -45,10 +45,9 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage.jsx";
 import AdminSlotsPage from "./pages/admin/AdminSlotsPage.jsx";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage.jsx";
 import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage.jsx";
-import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage.jsx";
-// NEW ADMIN PAGES
 import AdminPaymentPage from "./pages/admin/AdminPaymentPage.jsx";
 import AdminTraineesPage from "./pages/admin/AdminTraineesPage.jsx";
+import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage.jsx";
 
 function App() {
   return (
@@ -78,12 +77,13 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/finishVerify" element={<FinishVerify />} />
           </Route>
+          <Route path="/finishVerify" element={<FinishVerify />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* STUDENT DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-            <Route element={<StudentLayout />}>
+            <Route element={<AppLayout />}> {/* Use AppLayout */}
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/student/basic-details" element={<StudentBasicDetailsPage />} />
               <Route path="/student/change-password" element={<StudentChangePasswordPage />} />
@@ -95,7 +95,7 @@ function App() {
 
           {/* SUPERVISOR DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["supervisor"]} />}>
-            <Route element={<SupervisorLayout />}>
+            <Route element={<AppLayout />}> {/* Use AppLayout */}
               <Route path="/supervisor/dashboard" element={<SupervisorDashboardPage />} />
               <Route path="/supervisor/applications/pending" element={<SupervisorPendingApplicationsPage />} />
               <Route path="/supervisor/applications/all" element={<SupervisorPaymentVerificationPage />} />
@@ -110,7 +110,7 @@ function App() {
 
           {/* ADMIN DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-            <Route element={<AdminLayout />}>
+            <Route element={<AppLayout />}> {/* Use AppLayout */}
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/slots" element={<AdminSlotsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
@@ -121,6 +121,8 @@ function App() {
               <Route path="/admin/applications/completed" element={<AdminCompletedApplicationsPage />} />
             </Route>
           </Route>
+          
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

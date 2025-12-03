@@ -1,4 +1,4 @@
-/* src/App.css */
+/* src/App.css - Simplified */
 :root {
   /* --- RCF BRAND PALETTE --- */
   --primary-green: #006400;       
@@ -27,6 +27,21 @@ h1, h2, h3, h4 { color: var(--primary-green); font-weight: 700; margin-bottom: 0
 a { color: var(--primary-green); text-decoration: none; font-weight: 600; }
 a:hover { text-decoration: underline; }
 
+/* --- FORMS --- */
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  background: #fff;
+  outline: none;
+  font-size: 15px;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(0, 100, 0, 0.1);
+}
+
 /* --- BUTTONS --- */
 button { cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
 
@@ -36,6 +51,7 @@ button { cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
   border: 1px solid var(--primary-green) !important;
   padding: 10px 24px;
   border-radius: var(--radius);
+  font-size: 15px;
 }
 .btn-primary:hover {
   background-color: var(--primary-hover) !important;
@@ -49,7 +65,7 @@ button { cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
   margin-top: 20px;
   border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(0, 0, 0, 0.3); /* Slightly darker initial background */
+  background: rgba(0, 0, 0, 0.3); 
   color: #fff;
   display: flex;
   align-items: center;
@@ -57,28 +73,14 @@ button { cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
   gap: 8px;
   backdrop-filter: blur(4px);
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-  font-weight: bold; /* Make text bolder */
-  transition: all 0.3s ease; /* Smooth transition */
+  font-weight: bold; 
+  transition: all 0.3s ease; 
 }
 
 /* Hover Effect: Turn Red with White Text */
 .btn-sidebar:hover {
-  background: #dc3545; /* Bootstrap Red / Danger Color */
+  background: #dc3545; /* Red / Danger Color */
   color: #fff;
   border-color: #dc3545;
-  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4); /* Red glow effect */
-}
-
-/* --- FORMS --- */
-input, select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: var(--radius);
-  background: #fff;
-  outline: none;
-}
-input:focus, select:focus {
-  border-color: var(--primary-green);
-  box-shadow: 0 0 0 3px rgba(0, 100, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4); 
 }

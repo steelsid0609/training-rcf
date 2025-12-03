@@ -1,20 +1,20 @@
 // src/pages/Home.jsx
 import { useNavigate } from "react-router-dom";
+import { UI_STYLES } from "../utils/constants";
 
 export default function Home() {
   const nav = useNavigate();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-      <button onClick={() => nav("/login?role=student")} style={buttonStyle}>
-        Student Login
-      </button>
-
-      <button
-        onClick={() => nav("/login?role=admin")}
-        style={{ ...buttonStyle, background: "#cc0000" }}
+      <p style={{marginBottom: 10, color: UI_STYLES.TEXT_MUTED}}>
+      </p>
+      <button 
+        onClick={() => nav("/login")} 
+        style={buttonStyle}
+        className="btn-primary" // Use the centralized styling
       >
-        Admin Login
+        Sign In / Register
       </button>
     </div>
   );
@@ -26,7 +26,6 @@ const buttonStyle = {
   fontWeight: "bold",
   border: "none",
   borderRadius: "8px",
-  background: "#28a745",
   color: "white",
   cursor: "pointer",
   transition: "0.3s",

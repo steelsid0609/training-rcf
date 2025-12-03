@@ -1,11 +1,6 @@
+// src/utils/pdfGenerator.js
 import { jsPDF } from "jspdf";
-
-// Helper to format dates
-const formatDate = (dateStr) => {
-  if (!dateStr) return "-";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
-};
+import { formatDateDisplay } from "./helpers"; // Use centralized helper
 
 export const generateApprovalLetterPDF = (student, approvalDetails) => {
   const doc = new jsPDF();
@@ -28,7 +23,7 @@ export const generateApprovalLetterPDF = (student, approvalDetails) => {
   // --- META ---
   let currentY = 45;
   doc.setFontSize(11);
-  doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, pageWidth - 20, currentY, { align: "right" });
+  doc.text(`Date: ${formatDateDisplay(new Date(), 'DD/MM/YYYY')}`, pageWidth - 20, currentY, { align: "right" });
   doc.text(`Ref: APP/${new Date().getFullYear()}/${student.id.substring(0,6).toUpperCase()}`, 20, currentY);
 
   // --- RECIPIENT ---
@@ -68,7 +63,7 @@ Based on your application and slot availability, your training has been schedule
   doc.setFont("helvetica", "bold");
   doc.text(`Approved Duration:`, 25, currentY + 10);
   doc.setFont("helvetica", "normal");
-  doc.text(`${approvalDetails.actualStartDate}  TO  ${approvalDetails.actualEndDate}`, 80, currentY + 10);
+  doc.text(`${formatDateDisplay(approvalDetails.actualStartDate, 'DD/MM/YYYY')}  TO  ${formatDateDisplay(approvalDetails.actualEndDate, 'DD/MM/YYYY')}`, 80, currentY + 10);
 
   doc.setFont("helvetica", "bold");
   doc.text(`Duration Type:`, 25, currentY + 20);
@@ -127,7 +122,7 @@ export const generatePostingLetterPDF = (student, details) => {
 
   // --- META DATA ---
   doc.setFontSize(11);
-  const dateStr = new Date().toLocaleDateString('en-GB');
+  const dateStr = formatDateDisplay(new Date(), 'DD/MM/YYYY');
   doc.text(`Date: ${dateStr}`, pageWidth - 20, 45, { align: "right" });
   doc.text(`Ref: RCF/TRG/${new Date().getFullYear()}/${student.id.substring(0,6)}`, 20, 45);
 
