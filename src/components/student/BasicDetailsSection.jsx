@@ -32,7 +32,6 @@ export default function BasicDetailsSection({ compact = false }) {
 
   return (
     <div>
-      {!compact && <h2>Edit Basic Details</h2>}
       {compact && <h3>Basic Details</h3>}
       <StudentBasicDetailsForm
         user={user}

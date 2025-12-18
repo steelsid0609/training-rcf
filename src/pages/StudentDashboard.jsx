@@ -19,6 +19,7 @@ export default function StudentDashboard() {
         <div>
           <ProfileSummarySection />
         </div>
+        
       </div>
     </div>
   );

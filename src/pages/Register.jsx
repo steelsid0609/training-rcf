@@ -32,6 +32,7 @@ export default function Register() {
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
+        profileComplete: false,
         role: "student", // Default role
         createdAt: serverTimestamp(),
         // Add empty placeholders so profile page doesn't crash later

@@ -1,9 +1,10 @@
 // src/layouts/AppLayout.jsx
-import React from "react";
+import React, { useState, useEffect } from "react"; 
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebase.js";
+import { auth, db } from "../firebase.js"; 
+import { doc, getDoc } from "firebase/firestore"; 
 import { ROLES, UI_STYLES } from "../utils/constants";
 import "../../src/App.css"; 
 import bgImage from "../assets/left-bg.jpg"; 
@@ -85,33 +86,66 @@ const NavigationLinks = ({ role }) => {
 export default function AppLayout() {
     const { user, role } = useAuth();
     const navigate = useNavigate();
+    const [profile, setProfile] = useState(null); 
+
+    useEffect(() => {
+        if (user) {
+            const fetchProfile = async () => {
+                try {
+                    const snap = await getDoc(doc(db, "users", user.uid));
+                    if (snap.exists()) setProfile(snap.data());
+                } catch (err) {
+                    console.error("Error fetching sidebar profile:", err);
+                }
+            };
+            fetchProfile();
+        }
+    }, [user]);
 
     const handleLogout = async () => {
         try { await signOut(auth); navigate("/"); } catch (err) { console.error(err); }
     };
 
-    if (!role) return null; // Wait for role to be determined
+    const handleImageClick = () => {
+        if (profile?.photoURL) {
+            window.open(profile.photoURL, "_blank");
+        }
+    };
+
+    if (!role) return null; 
 
     return (
         <div style={layoutStyles.mainContainer}>
             <aside style={layoutStyles.sidebar}>
-                {/* Dark Overlay for Readability */}
                 <div style={layoutStyles.overlay}></div>
 
                 <div style={layoutStyles.sidebarContent}>
-                    
-                    {/* Header */}
                     <div style={layoutStyles.header}>
                         <div style={layoutStyles.roleTitle}>{role.toUpperCase()}</div>
                     </div>
 
-                    {/* Navigation */}
                     <nav style={layoutStyles.nav}>
                         <NavigationLinks role={role} />
                     </nav>
 
-                    {/* Footer & Sign Out */}
                     <div style={layoutStyles.footer}>
+                        <div style={{ textAlign: "center", marginBottom: 15 }}>
+                            <img
+                                src={profile?.photoURL || "https://via.placeholder.com/60"}
+                                alt="User Profile"
+                                onClick={handleImageClick}
+                                style={{
+                                    width: 65,
+                                    height: 65,
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    cursor: profile?.photoURL ? "pointer" : "default",
+                                    border: `2px solid ${UI_STYLES.PRIMARY_GREEN}`,
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.3)"
+                                }}
+                            />
+                        </div>
+
                         <div style={layoutStyles.emailDisplay}>
                             {user?.email}
                         </div>
@@ -132,13 +166,12 @@ export default function AppLayout() {
     );
 }
 
-// --- Layout Styles ---
 const layoutStyles = {
     mainContainer: { 
         display: "flex", 
-        minHeight: "100vh", 
+        height: "100vh", // Fixed height to lock viewport
         width: "100vw", 
-        overflow: "hidden" 
+        overflow: "hidden" // Prevents body-level scrolling
     },
     sidebar: {
         width: 270,
@@ -154,14 +187,14 @@ const layoutStyles = {
     },
     overlay: {
         position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-        background: "rgba(0, 0, 0, 0.4)", // Consistent dark tint
+        background: "rgba(0, 0, 0, 0.4)", 
         zIndex: 0
     },
     sidebarContent: { 
         position: "relative", zIndex: 1, 
         display: "flex", 
         flexDirection: "column", 
-        height: "100vh", // Use vh to ensure full height for scroll
+        height: "100vh", 
         padding: "25px 15px",
     },
     header: { 
@@ -178,10 +211,13 @@ const layoutStyles = {
     },
     nav: { 
         flex: 1, 
-        overflowY: "auto" 
+        overflowY: "auto", // Allows nav links to scroll internally if they overflow
+        paddingRight: "5px"
     },
     footer: { 
-        marginTop: "auto" 
+        marginTop: "auto",
+        paddingTop: 15,
+        borderTop: "1px solid rgba(255,255,255,0.2)"
     },
     emailDisplay: { 
         fontSize: 13, 
@@ -193,7 +229,8 @@ const layoutStyles = {
     mainContent: { 
         flex: 1, 
         padding: "30px", 
-        overflowY: "auto", 
+        overflowY: "auto", // Enables scrolling only for the right side content
+        height: "100vh", 
         background: "#ffffff" 
     },
     contentWrapper: { 

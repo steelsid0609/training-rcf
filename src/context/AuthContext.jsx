@@ -8,6 +8,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);      // Firebase user
   const [role, setRole] = useState(null);      // "student" | "supervisor" | "admin"
+  const [profileComplete, setProfileComplete] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }) => {
       if (!firebaseUser) {
         setUser(null);
         setRole(null);
+        setProfileComplete(false);
         setLoading(false);
         return;
       }
@@ -28,9 +30,11 @@ export const AuthProvider = ({ children }) => {
         if (snap.exists()) {
           const data = snap.data();
           setRole(data.role || "student");
+          setProfileComplete(!!data.profileComplete);
         } else {
           // Fallback if doc is missing
           setRole("student");
+          setProfileComplete(false);
         }
       } catch (err) {
         console.error("Error fetching user role", err);
@@ -47,8 +51,9 @@ export const AuthProvider = ({ children }) => {
     user,
     role,
     loading,
-    isAuthenticated: !!user,
-  };
+    isAuthenticated: !!user, 
+    profileComplete,
+    };
 
   // --- UI: Loading Screen ---
   if (loading) {

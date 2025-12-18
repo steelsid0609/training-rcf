@@ -48,7 +48,7 @@ export default function StudentApplicationDetailsModal({ app, onClose }) {
 
       {/* 2. PERSONAL DETAILS */}
       <Section title="Student Details">
-        <Field label="Name" value={app.studentName} />
+        <Field label="Name" value={app.fullname} />
         <Field label="Email" value={app.email} />
         <Field label="Phone" value={app.phone} />
         <Field label="Discipline" value={app.discipline} />
@@ -62,7 +62,7 @@ export default function StudentApplicationDetailsModal({ app, onClose }) {
 
         <div style={dateBoxStyle.actual}>
           <strong style={{ color: getStatusStyle('approved').col }}>Actual/Final Dates:</strong>
-          {isFinal ? `${start} to ${end}` : "Awaiting Supervisor Approval"}
+          {isFinal ? `${start} to ${end}` : " Awaiting Supervisor Approval"}
         </div>
 
         {app.durationDetails && (

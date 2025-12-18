@@ -110,7 +110,7 @@ export default function StudentUploadCoverLetterModal({
         <hr style={{ margin: "15px 0" }} />
 
         <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-          Select Image (JPG/PNG, Max 2MB):
+          Select Image (JPG/JPEG, Max 2MB):
         </label>
         <input
           type="file"
