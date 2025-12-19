@@ -38,6 +38,10 @@ import SupervisorCollegesTempPage from "./pages/supervisor/SupervisorCollegesTem
 import SupervisorCollegesMasterPage from "./pages/supervisor/SupervisorCollegesMasterPage.jsx";
 import SupervisorCurrentTraineesPage from "./pages/supervisor/SupervisorCurrentTraineesPage.jsx";
 import SupervisorMasterApplicationsPage from "./pages/supervisor/SupervisorMasterApplicationsPage.jsx";
+import SupervisorOnboardingPage from "./pages/supervisor/SupervisorOnboardingPage.jsx";
+import SupervisorSafetyPage from "./pages/supervisor/SupervisorSafetyPage.jsx";
+import SupervisorPostingLetterPage from "./pages/supervisor/SupervisorPostingLetterPage.jsx";
+import SupervisorOneDayGatePass from "./pages/supervisor/SupervisorOneDayGatePass.jsx";
 
 // Admin pages
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
@@ -109,6 +113,10 @@ function App() {
               <Route path="/supervisor/colleges/master" element={<SupervisorCollegesMasterPage />} />
               <Route path="/supervisor/applications/master" element={<SupervisorMasterApplicationsPage />} />
               <Route path="/supervisor/verify-colleges" element={<VerifyCollegeDetailsPage />} />
+              <Route path="/supervisor/onboarding" element={<SupervisorOnboardingPage />} />
+              <Route path="/supervisor/safety-training" element={<SupervisorSafetyPage />} />
+              <Route path="/supervisor/1-gate-pass" element={<SupervisorOneDayGatePass />} />
+              <Route path="/supervisor/issue-postings" element={<SupervisorPostingLetterPage />} />
             </Route>
           </Route>
 

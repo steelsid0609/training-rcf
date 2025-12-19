@@ -43,7 +43,7 @@ export default function TraineeActionCard({ app, user }) {
     <div style={{ background: "#fff", padding: 20, borderRadius: 8, boxShadow: "0 2px 5px rgba(0,0,0,0.1)", borderLeft: "5px solid #006400", marginBottom: 15 }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
-          <h4 style={{ margin: "0 0 5px 0" }}>{app.studentName}</h4>
+          <h4 style={{ margin: "0 0 5px 0" }}>{app.fullname || app.studentName || app.studentBasicDetails?.fullname}</h4>
           <div style={{ fontSize: 13, color: "#666" }}>{app.collegeName}</div>
           <div style={{ fontSize: 13, marginTop: 5 }}>
             <strong>Status:</strong> <span style={{ textTransform: "uppercase", fontWeight: "bold", color: "#006400" }}>{app.status}</span>

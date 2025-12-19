@@ -116,6 +116,57 @@ export function useApplicationActions(user) {
     }
   };
 
+  // Add these to src/hooks/useApplicationActions.js
+
+  const issueGatePass = async (appId, type, days) => {
+    setWorking(true);
+    try {
+      await updateDoc(doc(db, "applications", appId), {
+        gatePassStatus: "issued",
+        gatePassType: type, // "1-day" or "full-duration"
+        gatePassIssuedAt: serverTimestamp()
+      });
+      toast.success(`${type} Gate Pass Issued!`);
+    } catch (err) { toast.error(err.message); }
+    finally { setWorking(false); }
+  };
+
+  const markPhysicallyJoined = async (app) => {
+    setWorking(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const durationValue = app.durationDetails?.value;
+      const durationType = app.durationDetails?.type;
+
+      // Calculate Final End Date (Duration minus 1 day)
+      const finalEnd = calculateEndDate(today, durationValue, durationType);
+
+      await updateDoc(doc(db, "applications", app.id), {
+        status: "joined",
+        physicallyJoinedAt: serverTimestamp(),
+        finalStartDate: today,
+        finalEndDate: finalEnd,
+        onboardingStep: "safety_pending"
+      });
+      toast.success("Student marked as Physically Joined!");
+    } catch (err) { toast.error(err.message); }
+    finally { setWorking(false); }
+  };
+
+  const completeSafetyTraining = async (appId, instruments) => {
+    setWorking(true);
+    try {
+      await updateDoc(doc(db, "applications", appId), {
+        safetyTrainingCompleted: true,
+        safetyTrainingAt: serverTimestamp(),
+        issuedInstruments: instruments, // e.g., ["Helmet", "Safety Shoes"]
+        onboardingStep: "completed"
+      });
+      toast.success("Safety Training & Instruments Recorded!");
+    } catch (err) { toast.error(err.message); }
+    finally { setWorking(false); }
+  };
+
   // --- 5. ISSUE POSTING LETTER (Pending Confirmation/In Progress -> In Progress) ---
   const issuePostingLetter = async (app, period, plant, fileOrBlob) => {
     setWorking(true);

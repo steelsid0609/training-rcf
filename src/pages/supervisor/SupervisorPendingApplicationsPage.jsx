@@ -21,7 +21,7 @@ export default function SupervisorPendingApplicationsPage() {
   const [selectedSlot, setSelectedSlot] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   
-  // NEW: State for modal control - holds the app being finalized
+  // State for modal control - holds the app being finalized
   const [appToFinalize, setAppToFinalize] = useState(null); 
   
   const [loading, setLoading] = useState(true);
@@ -80,14 +80,23 @@ export default function SupervisorPendingApplicationsPage() {
     };
   }, []);
 
-  // MODIFIED handleApprove: Accepts final form data from modal
+  /**
+   * UPDATED: Handler to link application slot clicks to the occupancy monitor
+   */
+  const handleSlotClick = (slotId) => {
+    if (slotId) {
+      setSelectedSlot(slotId);
+      // Optional: Scroll back to top so user sees the updated occupancy bar
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // handleApprove: Accepts final form data from modal
   async function handleApprove(app, finalFormData) {
     const newSlotId = finalFormData.slotId;
-    // const oldSlotId = app.durationDetails?.slotId; // Not used in this logic step
 
     setWorking(true);
     try {
-      
       const appRef = doc(db, "applications", app.id);
       
       // 1. Update Application Status, Actual Dates, and Slot ID
@@ -95,29 +104,21 @@ export default function SupervisorPendingApplicationsPage() {
         status: "approved",
         approvedBy: user.uid,
         approvedAt: serverTimestamp(),
-        // Store the FINAL dates as ACTUAL dates
-        actualStartDate: finalFormData.actualStartDate, // NEW FIELD
-        actualEndDate: finalFormData.actualEndDate,   // NEW FIELD
-        // The preferred dates remain unchanged (on the document)
-        
-        // Update the durationDetails object to reflect the new slotId
+        actualStartDate: finalFormData.actualStartDate,
+        actualEndDate: finalFormData.actualEndDate,
         durationDetails: {
             ...app.durationDetails,
             slotId: newSlotId
         },
       });
       
-      // 2. Update Slot Count (Only Increment the new slot)
+      // 2. Update Slot Count
       if (newSlotId) {
         const newSlotRef = doc(db, "trainingSlots", newSlotId);
         await updateDoc(newSlotRef, {
-          // Increment the applicationCount field by 1
           applicationCount: increment(1)
         });
       }
-      // Note: We do NOT decrement the old slot, as the old slot was just a "pending" application, 
-      // and we only track counts for "approved" applications.
-
       
       toast.success("Application Approved & Dates Finalized ✅");
       
@@ -126,7 +127,7 @@ export default function SupervisorPendingApplicationsPage() {
       toast.error("Failed to approve: " + err.message);
     } finally {
       setWorking(false);
-      setAppToFinalize(null); // Close modal on completion/failure
+      setAppToFinalize(null);
     }
   }
 
@@ -151,7 +152,6 @@ export default function SupervisorPendingApplicationsPage() {
     }
   }
   
-  // Wrapper for ApplicationsView to open the modal
   const openFinalizeModal = (app) => {
       setAppToFinalize(app);
   };
@@ -191,9 +191,10 @@ export default function SupervisorPendingApplicationsPage() {
       <ApplicationsView
         applications={applications}
         slotsMap={slotsMap} 
-        // Use the modal opener instead of the direct handleApprove
         onApprove={openFinalizeModal}
         onReject={handleReject}
+        // ADDED PROP HERE: Links the click in the list to the state above
+        onSlotClick={handleSlotClick}
         working={working}
         styles={styles}
       />

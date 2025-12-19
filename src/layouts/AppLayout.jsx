@@ -55,6 +55,10 @@ const NavigationLinks = ({ role }) => {
                     <div style={linkGroupDivider}>Under Process Applications</div>
                     <NavItem to="/supervisor/applications/pending" label="Pending Applications" />
                     <NavItem to="/supervisor/applications/all" label="Payment Verification" />
+                    <NavItem to="/supervisor/1-gate-pass" label="1-Day Gate Pass" />
+                    <NavItem to="/supervisor/onboarding" label="Physical Joining" />
+                    <NavItem to="/supervisor/safety-training" label="Safety Training" />
+                    <NavItem to="/supervisor/issue-postings" label="Posting Letters" />
                     <NavItem to="/supervisor/current-trainees" label="Active Trainees" />
                     <NavItem to="/supervisor/applications/rejected" label="Rejected Applications" />
                     <div style={linkGroupDivider}>All Applications View</div>
@@ -215,7 +219,9 @@ const layoutStyles = {
     nav: { 
         flex: 1, 
         overflowY: "auto", // Allows nav links to scroll internally if they overflow
-        paddingRight: "5px"
+        paddingRight: "5px",
+        msOverflowStyle: "none", // IE and Edge
+        scrollbarWidth: "none" // Firefox
     },
     footer: { 
         marginTop: "auto",

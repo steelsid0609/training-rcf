@@ -177,38 +177,6 @@ export default function SupervisorCurrentTraineesPage() {
         Issue posting letters for new joiners and manage active departmental rotations.
       </p>
 
-      {/* --- SECTION 1: READY TO START (Pending Confirmation) --- */}
-      {readyToStart.length > 0 && (
-        <div style={{ marginBottom: 40 }}>
-          <div style={styles.sectionHeader}>
-            🚀 New Joinees (Ready for 1st Posting Letter)
-          </div>
-          <div style={styles.grid}>
-            {readyToStart.map(app => (
-              <div key={app.id} style={{...styles.card, borderLeft: "5px solid #ff9800"}}>
-                <div style={{ padding: 20 }}>
-                  <h3 style={styles.name}>{app.studentName}</h3>
-                  <div style={styles.sub}>{app.internshipType} | {app.collegeName}</div>
-                  <div style={styles.info}>
-                    <strong>Duration:</strong> {app.durationDetails?.value} {app.durationDetails?.type}
-                  </div>
-                  <div style={styles.info}>
-                    <strong>Dates:</strong> {app.preferredStartDate} to {app.preferredEndDate}
-                  </div>
-                  
-                  <button 
-                    onClick={() => openIssueModal(app)}
-                    style={styles.btnPrimary}
-                  >
-                    📝 Issue 1st Letter & Start
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* --- SECTION 2: ACTIVE TRAINEES --- */}
       <div style={styles.sectionHeader}>
         ⚙️ Active Trainees ({activeTrainees.length})
