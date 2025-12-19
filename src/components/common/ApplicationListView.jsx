@@ -1,11 +1,11 @@
-// src/components/admin/ApplicationsView.jsx
 import React from "react";
 
 export default function ApplicationsView({
   applications,
-  slotsMap = {}, // Default to empty object if not provided
+  slotsMap = {},
   onApprove,
   onReject,
+  onSlotClick, // New prop for interactive filtering
   working,
   styles,
 }) {
@@ -20,7 +20,7 @@ export default function ApplicationsView({
   }
 
   if (!applications || applications.length === 0) {
-    return <div style={{padding: 20, color: "#666"}}>No applications found in this category.</div>;
+    return <div style={{ padding: 20, color: "#666" }}>No applications found in this category.</div>;
   }
 
   return (
@@ -30,20 +30,18 @@ export default function ApplicationsView({
         const startDisplay = safeFormatDate(app.preferredStartDate);
         const endDisplay = safeFormatDate(app.preferredEndDate);
 
-        // Duration Text
+        // --- Logic to extract Slot ID safely ---
+        const slotId = app.durationDetails?.slotId || app.slotId || "";
+        const slotLabel = slotsMap[slotId] || "Custom/Manual Slot";
+
         let durationText = "";
-        let slotId = "";
         if (app.durationDetails) {
-          const { value, type, slotId: sId } = app.durationDetails;
+          const { value, type } = app.durationDetails;
           durationText = `(${value} ${type})`;
-          slotId = sId;
         }
 
-        // Lookup Slot Label
-        const slotLabel = slotsMap[slotId] || "Custom/Unknown Slot";
-
         return (
-          <div key={app.id} style={{...card, borderLeft: "5px solid #006400"}}>
+          <div key={app.id} style={{ ...card, borderLeft: "5px solid #006400" }}>
             <div
               style={{
                 display: "flex",
@@ -53,34 +51,54 @@ export default function ApplicationsView({
                 gap: 20
               }}
             >
-              {/* --- DETAILS --- */}
+              {/* --- STUDENT DETAILS --- */}
               <div style={{ flex: 1, minWidth: "280px" }}>
-                <div style={{ fontWeight: 700, fontSize: "18px", color: "#333" }}>
-                  {app.studentName || app.email || "Applicant"}
+                <div style={{ fontWeight: 700, fontSize: "19px", color: "#004d40" }}>
+                  {app.fullname || app.studentName || "Applicant Name Missing"}
                 </div>
                 <div style={{ fontSize: "14px", color: "#555", marginBottom: 8 }}>
-                  {app.email} &bull; {app.phone || "No Phone"}
+                  📧 {app.email} &bull; 📱 {app.phone || app.mobile || "No Contact"}
                 </div>
 
                 <hr style={{ border: "0", borderTop: "1px solid #eee", margin: "10px 0" }} />
 
-                <div style={{ marginBottom: 6, fontSize: "15px" }}>
-                  <strong>📅 Slot:</strong> <span style={{color: "#0056b3", fontWeight: "bold"}}>{slotLabel}</span>
+                {/* --- CLICKABLE SLOT NAME --- */}
+                <div style={{ marginBottom: 8, fontSize: "15px" }}>
+                  <strong>📅 Selected Slot:</strong>{" "}
+                  <span 
+                    onClick={() => onSlotClick && onSlotClick(slotId)}
+                    style={{
+                      color: "#0056b3", 
+                      fontWeight: "bold", 
+                      cursor: onSlotClick ? "pointer" : "default",
+                      textDecoration: onSlotClick ? "underline" : "none",
+                      background: "#f0f7ff",
+                      padding: "2px 6px",
+                      borderRadius: "4px"
+                    }}
+                    title={onSlotClick ? "Click to filter all students in this slot" : ""}
+                  >
+                    {slotLabel}
+                  </span>
                 </div>
 
                 <div style={{ marginBottom: 6 }}>
-                  <strong>Duration:</strong> {startDisplay} {" → "} {endDisplay}{" "}
-                  <span style={{fontWeight: "bold", color: "#e65100"}}>
+                  <strong>🎓 Discipline:</strong> {app.discipline || "Not Specified"}
+                </div>
+
+                <div style={{ marginBottom: 6 }}>
+                  <strong>⏱ Duration:</strong> {startDisplay} {" → "} {endDisplay}{" "}
+                  <span style={{ fontWeight: "bold", color: "#e65100" }}>
                     {durationText}
                   </span>
                 </div>
 
                 <div style={{ marginBottom: 6 }}>
-                  <strong>Type:</strong> {app.internshipType}
+                  <strong>🏢 College:</strong> {collegeName}
                 </div>
-                
+
                 <div style={{ marginBottom: 6 }}>
-                  <strong>College:</strong> {collegeName}
+                  <strong>📝 Internship Type:</strong> {app.internshipType}
                 </div>
 
                 {/* Recommendation Letter */}
@@ -93,62 +111,61 @@ export default function ApplicationsView({
                       style={{
                         display: "inline-block",
                         padding: "6px 12px",
-                        background: "#f0f8ff",
-                        color: "#006400",
+                        background: "#f0fdf4",
+                        color: "#166534",
                         textDecoration: "none",
-                        borderRadius: "4px",
+                        borderRadius: "6px",
                         fontSize: "13px",
                         fontWeight: "600",
-                        border: "1px solid #b3d7ff"
+                        border: "1px solid #bbf7d0"
                       }}
                     >
                       📄 View Recommendation Letter
                     </a>
                   </div>
                 ) : (
-                  <div style={{ marginTop: 10, color: "#dc3545", fontSize: "13px" }}>
-                    ⚠️ No Recommendation Letter
+                  <div style={{ marginTop: 10, color: "#dc3545", fontSize: "13px", fontWeight: "bold" }}>
+                    ⚠️ No Recommendation Letter Provided
                   </div>
                 )}
 
-                <div style={{ marginTop: 10, fontSize: 12, color: "#999" }}>
-                  Submitted:{" "}
-                  {app.createdAt?.toDate
-                    ? app.createdAt.toDate().toLocaleString()
-                    : "Just now"}
+                <div style={{ marginTop: 12, fontSize: 11, color: "#999", fontStyle: "italic" }}>
+                  Applied on: {app.createdAt?.toDate ? app.createdAt.toDate().toLocaleString() : "Recently"}
                 </div>
               </div>
 
-              {/* --- ACTIONS --- */}
+              {/* --- ACTION BUTTONS --- */}
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 10,
-                  minWidth: "150px",
+                  gap: 12,
+                  minWidth: "160px",
                   alignItems: "flex-end"
                 }}
               >
                 <div style={{ fontSize: 13, marginBottom: 5 }}>
-                  Status:{" "}
+                  STATUS:{" "}
                   <span
                     style={{
-                      fontWeight: 700,
-                      color: app.status === "pending" ? "#ff9800" : "#28a745",
-                      textTransform: "uppercase"
+                      fontWeight: 800,
+                      color: app.status === "pending" ? "#f57c00" : "#2e7d32",
+                      padding: "4px 8px",
+                      background: app.status === "pending" ? "#fff3e0" : "#e8f5e9",
+                      borderRadius: "4px"
                     }}
                   >
-                    {app.status || "Pending"}
+                    {app.status?.toUpperCase() || "PENDING"}
                   </span>
                 </div>
 
                 {onApprove && (
                   <button
                     onClick={() => onApprove(app)}
-                    style={{...applyBtn, width: "100%", textAlign: "center"}}
+                    style={{ ...applyBtn, width: "100%", textAlign: "center", background: "#2e7d32" }}
                     disabled={working}
                   >
-                    Approve
+                    Approve & Finalize
                   </button>
                 )}
                 {onReject && (
@@ -156,7 +173,7 @@ export default function ApplicationsView({
                     onClick={() => onReject(app)}
                     style={{
                       ...applyBtn,
-                      background: "#dc3545",
+                      background: "#c62828",
                       width: "100%",
                       textAlign: "center"
                     }}

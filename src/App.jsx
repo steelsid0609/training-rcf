@@ -47,6 +47,8 @@ import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage.jsx";
 import AdminPendingApplicationsPage from "./pages/admin/AdminPendingApplicationsPage.jsx";
 import AdminPaymentPage from "./pages/admin/AdminPaymentPage.jsx";
 import AdminTraineesPage from "./pages/admin/AdminTraineesPage.jsx";
+import CollegeDetailsPage from "./pages/student/CollegeDetailsPage";
+import VerifyCollegeDetailsPage from "./pages/supervisor/VerifyCollegeDetailsPage.jsx";
 import AdminCompletedApplicationsPage from "./pages/admin/AdminCompletedApplicationsPage.jsx";
 
 function App() {
@@ -90,6 +92,7 @@ function App() {
               <Route path="/student/cover-letter" element={<StudentCoverLetterPage />} />
               <Route path="/student/applications" element={<StudentApplicationsPage />} />
               <Route path="/student/posting-letter" element={<StudentPostingLetterPage />} />
+              <Route path="/student/college-details" element={<CollegeDetailsPage />} />
             </Route>
           </Route>
 
@@ -105,6 +108,7 @@ function App() {
               <Route path="/supervisor/colleges/temp" element={<SupervisorCollegesTempPage />} />
               <Route path="/supervisor/colleges/master" element={<SupervisorCollegesMasterPage />} />
               <Route path="/supervisor/applications/master" element={<SupervisorMasterApplicationsPage />} />
+              <Route path="/supervisor/verify-colleges" element={<VerifyCollegeDetailsPage />} />
             </Route>
           </Route>
 
@@ -119,6 +123,7 @@ function App() {
               <Route path="/admin/applications/payments" element={<AdminPaymentPage />} />
               <Route path="/admin/applications/trainees" element={<AdminTraineesPage />} />
               <Route path="/admin/applications/completed" element={<AdminCompletedApplicationsPage />} />
+              <Route path="/supervisor/verify-colleges" element={<VerifyCollegeDetailsPage />} />
             </Route>
           </Route>
           

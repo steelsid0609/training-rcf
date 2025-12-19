@@ -40,6 +40,7 @@ const NavigationLinks = ({ role }) => {
                 <>
                     <NavItem to="/student/dashboard" label="Dashboard" />
                     <NavItem to="/student/applications" label="My Applications" />
+                    <NavItem to="/student/college-details" label="College Details" />
                     <NavItem to="/student/posting-letter" label="Posting Letter" />
                     <NavItem to="/student/cover-letter" label="Documents" />
                     <div style={linkGroupDivider}>Profile</div>
@@ -59,8 +60,10 @@ const NavigationLinks = ({ role }) => {
                     <div style={linkGroupDivider}>All Applications View</div>
                     <NavItem to="/supervisor/users" label="Student Users" />
                     <NavItem to="/supervisor/applications/master" label="All Applications" />
+                    <div style={linkGroupDivider}>Institute Data</div>
                     <NavItem to="/supervisor/colleges/temp" label="College Requests" />
                     <NavItem to="/supervisor/colleges/master" label="College Master List" />
+                    <NavItem to="/supervisor/verify-colleges" label="College Details Verification" />
                 </>
             );
         case ROLES.ADMIN:

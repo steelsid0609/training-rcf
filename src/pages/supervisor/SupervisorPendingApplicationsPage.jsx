@@ -19,6 +19,7 @@ export default function SupervisorPendingApplicationsPage() {
   const [slotsMap, setSlotsMap] = useState({});
   const [slotCounts, setSlotCounts] = useState({});
   const [selectedSlot, setSelectedSlot] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   
   // NEW: State for modal control - holds the app being finalized
   const [appToFinalize, setAppToFinalize] = useState(null); 

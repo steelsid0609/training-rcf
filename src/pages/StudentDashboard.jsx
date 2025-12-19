@@ -1,6 +1,7 @@
 import React from "react";
 import ProfileSummarySection from "../components/student/ProfileSummarySection.jsx";
 import ApplicationsSection from "../components/student/ApplicationsSection.jsx";
+import CollegeDetailsSection from "../components/student/CollegeDetailsSection.jsx";
 
 export default function StudentDashboard() {
   return (
